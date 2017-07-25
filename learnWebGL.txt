@@ -1,0 +1,28 @@
+教程来源：WebGL中文网-http://www.hewebgl.com/
+初级教程源码下载：http://hewebgl.com/article/getarticle/129
+个人用户：beblueblue
+
+1、What is Three.js
+	WebGL（Web Graphics Library）技术的js框架
+	源于github的开源项目：https://github.com/mrdoob/three.js
+	1.1 Three.js的源目录结构
+		Build目录：包含两个文件，three.js 和three.min.js 。这是three.js最终被引用的文件。
+		Docs目录：three.js的帮助文档，里面是各个函数的API，可惜内容不够详尽。
+		Editor目录：一个类似3D-max的简单编辑程序，它能创建一些三维物体。
+		Examples目录：一些基于three.js的demo，可惜没有文档介绍。
+		Src目录：源代码目录，包含所有源代码。
+		Test目录：一些测试代码，用处不大。
+		Utils目录：存放一些脚本，python文件的工具目录。例：将3D-max格式的模型转换为three.js特有的
+					json模型。
+		.gitignore文件：git工具的过滤规则文件。
+		CONTRIBUTING.md文件：一个关于bug规则，帮助获取规则的说明文档。
+		LICENSE文件：版权信息。
+		README.md文件：介绍three.js的文件，包含各版本的更新内容列表。
+	1.2 开发工具
+		作者推荐WebStorm
+		下载地址：http://www.ddxia.com/view/129861415446916.html 
+		百度网盘：http://pan.baidu.com/s/1o6JQX9S 和 http://pan.baidu.com/s/1tRb4a
+	1.3 调试
+		作者推荐Chrome浏览器自带的调试功能
+		代码调试课程推荐：http://zhangyongbluesky.blog.163.com/blog/static/1831941620113155739840/
+	
