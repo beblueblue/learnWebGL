@@ -26,3 +26,11 @@
 		作者推荐Chrome浏览器自带的调试功能
 		代码调试课程推荐：http://zhangyongbluesky.blog.163.com/blog/static/1831941620113155739840/
 	
+2、point, line, plane in Threejs
+	2.1 在Threejs中定义一个点
+		点用三维向量表示：THREEE.Vector3 = function ( x, y, z ) {
+							this.x = x||0;
+							this.y = y||0;
+							this.z = z||0;
+						}
+		例如
