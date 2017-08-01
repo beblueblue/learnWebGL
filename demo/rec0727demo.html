@@ -58,19 +58,37 @@
 
         var cube;
         function initObject() {
+			//声明一个几何体geometry，其vertrices变量，可以用于存放点
             var geometry = new THREE.Geometry();
+			//使用THREE.LineBasicMaterial( parameters )定义一种线条的材质
+			/*  --Color: 线条的颜色，用16进制来表示，默认为白色。
+			    --Linewidth: 线条的宽度，默认一个单位宽度
+			    --Linecap: 线条两端的外观，默认圆角端点（线宽较大时，效果明显）
+			    --Linejoin: 两个线条的连接点出的外观，默认"round"，圆角。
+			    --VertexColors: THREE.VertexColors表示线条颜色会根据定点来计算（NoColors: 1, FaceColors: 1, VertexColors: 2）
+                --fog: 定义材质的颜色是否受全局雾效的影响  */
             var material = new THREE.LineBasicMaterial({ vertexColors: THREE.VertexColors });
+            //使用new THREE.Color(ox444444)对象来定义端点颜色
             var color1 = new THREE.Color( 0x444444 ), 
                 color2 = new THREE.Color( 0xff0000 );
 
             //线的材质可以由2点的颜色决定
+            //定义2个顶点的位置，并放到geometry中
             var p1 = new THREE.Vector3( -100, 0, 100 );
             var p2 = new THREE.Vector3( 100, 0, -100 );
             geometry.vertices.push(p1);
             geometry.vertices.push(p2);
+            //给上述两个顶点设置不同的颜色
+            /*  geometry中colors表示顶点的颜色，必须是材质(THREE.LineBasicMaterial)中vertexColors等于THREE.VertexColors时，
+            颜色才有效,如果vertexColors等于THREE.NoColors时，颜色就没有效果了，那么就会去取材质中color的值。  */
             geometry.colors.push(color1, color2);
 
+            //定义线条，使用THREE.Line类
+            /*  geometry: new THREE.Geometry
+                material: new THREE.LineBasicMaterial
+                THREE.LinePieces: 定义一组点的连接方式  */
             var line = new THREE.Line( geometry, material, THREE.LinePieces );
+            //将线条加入场景中
             scene.add(line);
         }
         function render() {
