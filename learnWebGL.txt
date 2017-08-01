@@ -25,12 +25,30 @@
 	1.3 调试
 		作者推荐Chrome浏览器自带的调试功能
 		代码调试课程推荐：http://zhangyongbluesky.blog.163.com/blog/static/1831941620113155739840/
+		
+2、Three.js的三大组件
+	2.1 场景（scene）、相机（camera）、渲染器（renderer）
+		通过new一个对象，来构建这三个组件。
+		相机的种类很多，渲染方式分：离线渲染和事实渲染。
 	
-2、point, line, plane in Threejs
-	2.1 在Threejs中定义一个点
-		点用三维向量表示：THREEE.Vector3 = function ( x, y, z ) {
-							this.x = x||0;
-							this.y = y||0;
-							this.z = z||0;
-						}
-		例如
+3、point, line, plane in Threejs
+	3.1 在Threejs中定义一个点
+		点用三维向量表示：
+		//Vector3是定义在THREE下面的一个类
+		THREEE.Vector3 = function ( x, y, z ) {
+			this.x = x||0;
+			this.y = y||0;
+			this.z = z||0;
+		}
+	3.2 操作点
+		三维的点可以用THREE。Vector3D，对应源码：/src/math/Vector3.js;
+			var point1 = new THREE.Vector3( 4,8,9 );
+		可以用set方法定义点：
+			var point2 = new THREE.Vector3;
+			point2.set = ( 5,9,10 );
+	3.3 线条的操作参见：demo/rec0727demo.html
+	3.4 线条深入理解
+		Threejs采用右手坐标系
+		点有THREE.Vector3表示，Threejs中没有提供单独画点的函数，THREE.Geometry包含一个数组vertices
+		用于存放无数的点，故可以使用.push方法将点加入geometry.vertices中
+	
