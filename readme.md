@@ -7,4 +7,4 @@
 # 第三步：启动本地服务器
 * 在learnWebGL目录下，运行命令：node app.js
 # 第四步：浏览demo
-* 打开浏览器，输入localhost:3000
+* 打开浏览器，输入：localhost:3000
