@@ -1,0 +1,143 @@
+{% extends "base.html" %} {% block main %}
+<style>
+  body { margin: 0; }
+  canvas { width: 100%; height: 100% }
+</style>
+<div class="tc">
+    <button class="o8 com-button" onclick="drop()">投掷小球</button>
+</div>
+<div id="container"></div>
+<script>
+  //requestAnimationFrame兼容处理
+  window.requestAnimFrame = (function(){
+    return  window.requestAnimationFrame       || 
+            window.webkitRequestAnimationFrame || 
+            window.mozRequestAnimationFrame    || 
+            window.oRequestAnimationFrame      || 
+            window.msRequestAnimationFrame     || 
+            function(/* function */ callback, /* DOMElement */ element){
+              window.setTimeout(callback, 1000 / 60);
+            };
+  })();
+
+  // set the scene size
+  var WIDTH = 400,
+      HEIGHT = 300;
+	
+	// set some camera attributes
+	var VIEW_ANGLE = 45,
+	    ASPECT = WIDTH / HEIGHT,
+	    NEAR = 0.1,
+      FAR = 10000;
+      
+  //定义场景容器
+  var $container = $('#container');
+
+  //准备场景，相机，渲染器
+  var scene = null;
+  var camera = null;
+  var renderer = null;
+
+  //定义动画变量
+  var id = null;
+  //定义stat记录FPS
+  var stat = null;
+
+  //定义运动小球模型参数
+  var ballMesh = null;
+  var ballRadius = 0.5;
+  var isMoving = false;
+  var maxHeight = 6;
+  var v = 0;
+  var a = -0.01;
+
+  init();
+
+  function init() {
+    stat = new Stats();
+    stat.domElement.style.position = 'absolute';
+    stat.domElement.style.right = '0px';
+    stat.domElement.style.top = '0px';
+    document.body.appendChild(stat.domElement);
+
+    renderer = new THREE.WebGLRenderer();
+      // start the renderer
+    renderer.setClearColor(new THREE.Color(1, 1, 1));
+    renderer.setSize(WIDTH, HEIGHT);
+    
+    // attach the render-supplied DOM element
+    $container.append(renderer.domElement);
+    scene = new THREE.Scene();
+
+    //构建camera
+    camera = new THREE.OrthographicCamera(-5, 5, 3.75, -3.75, 0.1, 100);
+    camera.position.set(5, 10, 20);
+    camera.lookAt(new THREE.Vector3(0, 3, 0));
+    scene.add(camera);
+
+    //构建模型
+    //ball
+    ballMesh = new THREE.Mesh(new THREE.SphereGeometry(ballRadius, 16, 16),
+      new THREE.MeshLambertMaterial({
+        color: 0xffff00
+    }));
+    ballMesh.position.y = maxHeight;
+    scene.add(ballMesh);
+    //plane
+    var texture = new THREE.TextureLoader().load("/static/images/chess.png", function(){
+      renderer.render(scene, camera);
+    });
+    //定义材质水平和垂直围绕方式，重复
+    texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+    texture.repeat.set(1, 1);
+    var plane = new THREE.Mesh(new THREE.PlaneGeometry(5, 5),
+        new THREE.MeshLambertMaterial({map: texture}));
+    plane.rotation.x = -Math.PI / 2;
+    scene.add(plane);
+
+    //构建光源
+    var light = new THREE.DirectionalLight(0xffffff);
+    light.position.set(10, 10, 15);
+    scene.add(light);
+
+    id = requestAnimationFrame(draw);
+  }
+
+  function draw(){
+    stat.begin();
+
+    if (isMoving) {
+        ballMesh.position.y += v;
+        v += a;
+
+        if (ballMesh.position.y <= ballRadius) {
+            // hit plane
+            v = -v * 0.9;
+        }
+
+        if (Math.abs(v) < 0.0001) {
+            // stop moving
+            isMoving = false;
+            ballMesh.position.y = ballRadius;
+        }
+    }
+
+    renderer.render(scene, camera);
+    id = requestAnimationFrame(draw);
+    stat.end();
+  }
+
+  function stop() {
+    if (id !== null) {
+        cancelAnimationFrame(id);
+        id = null;
+    }
+  }
+
+  function drop() {
+    isMoving = true;
+    ballMesh.position.y = maxHeight;
+    v = 0;
+  }
+</script>
+{% endblock %}

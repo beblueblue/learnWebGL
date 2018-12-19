@@ -1,0 +1,190 @@
+{% extends "base.html" %} {% block main %}
+<style>
+  body {
+				background-color: #000000;
+				margin: 0px;
+				overflow: hidden;
+				font-family:Monospace;
+				font-size:13px;
+				text-align:center;
+				font-weight: bold;
+				text-align:center;
+			}
+</style>
+<script>
+  if ( ! Detector.webgl ) Detector.addGetWebGLMessage();
+  //定义模型变量
+  var camera, 
+      scene, 
+      renderer, 
+      stats, 
+      materials = [],
+      parameters;
+  //定义交互变量
+  var mouseX = 0,
+      mouseY = 0;
+  //屏幕大小缓存
+  var windowHalfX = window.innerWidth / 2,
+      windowHalfY = window.innerHeight / 2;
+
+  init();
+  animate();
+
+  //模型初始化及事件注册
+  function init(){
+    //选用远景相机
+    camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 1, 2000 );
+    camera.position.z = 1000;
+    scene = new THREE.Scene();
+    //定义场景为雾状背景
+    //指数雾，密度随距离呈指数级增长。
+    scene.fog = new THREE.FogExp2( 0x000000, 0.0008 );
+    
+    //采用缓存几何模型
+    var geometry = new THREE.BufferGeometry();
+    var vertices = [];
+    //定义粒子个数
+    var particleCount = 10000;
+    
+    //引入纹理图片
+    var textureLoader = new THREE.TextureLoader();
+    var sprite1 = textureLoader.load( '/static/images/textures/snowflake1.png' );
+    var sprite2 = textureLoader.load( '/static/images/textures/snowflake2.png' );
+    var sprite3 = textureLoader.load( '/static/images/textures/snowflake3.png' );
+    var sprite4 = textureLoader.load( '/static/images/textures/snowflake4.png' );
+    var sprite5 = textureLoader.load( '/static/images/textures/snowflake5.png' );
+    
+    //随机生成粒子位置，R3空间[-1000, 1000]
+    for ( var i = 0; i < particleCount; i ++ ) {
+      var x = Math.random() * 2000 - 1000;
+      var y = Math.random() * 2000 - 1000;
+      var z = Math.random() * 2000 - 1000;
+      vertices.push( x, y, z );
+    }
+    geometry.addAttribute( 'position', new THREE.Float32BufferAttribute( vertices, 3 ) );
+    
+    //纹理参数：色值，纹理图片，尺寸
+    parameters = [
+      [ [ 1.0, 0.2, 0.5 ], sprite2, 20 ],
+      [ [ 0.95, 0.1, 0.5 ], sprite3, 15 ],
+      [ [ 0.90, 0.05, 0.5 ], sprite1, 10 ],
+      [ [ 0.85, 0, 0.5 ], sprite5, 8 ],
+      [ [ 0.80, 0, 0.5 ], sprite4, 5 ]
+    ];
+
+    for ( var i = 0; i < parameters.length; i ++ ) {
+      var color  = parameters[ i ][ 0 ];
+      var sprite = parameters[ i ][ 1 ];
+      var size   = parameters[ i ][ 2 ];
+      /**
+        * blending: 显示该材质的对象时使用何种混合模式,选用相加模式
+        * depthTest: 是否在渲染这种材料时启用深度测试。缺省为 true.
+        * transparent: 定义此材质是否是透明的。这对渲染效果有影响，因为透明物体需要特殊的处理，并在所有非透明物体之后被渲染。缺省为 false.
+        **/
+      materials[ i ] = new THREE.PointsMaterial( { size: size, map: sprite, blending: THREE.AdditiveBlending, depthTest: false, transparent : true } );
+      materials[ i ].color.setHSL( color[ 0 ], color[ 1 ], color[ 2 ] );
+
+      var particles = new THREE.Points( geometry, materials[i] );
+      particles.rotation.x = Math.random() * 6;
+      particles.rotation.y = Math.random() * 6;
+      particles.rotation.z = Math.random() * 6;
+      scene.add( particles );
+    }
+
+    //渲染器
+    renderer = new THREE.WebGLRenderer();
+    //设置设备像素比。通常用于HiDPI设备防止模糊输出canvas。
+    renderer.setPixelRatio( window.devicePixelRatio );
+    renderer.setSize( window.innerWidth, window.innerHeight );
+    document.body.appendChild( renderer.domElement );
+
+    //监控fps
+    stats = new Stats();
+    document.body.appendChild( stats.dom );
+    
+    //监控移动端和pc端交互（移动）
+    document.addEventListener( 'mousemove', onDocumentMouseMove, false );
+    document.addEventListener( 'touchstart', onDocumentTouchStart, false );
+    document.addEventListener( 'touchmove', onDocumentTouchMove, false );
+
+    window.addEventListener( 'resize', onWindowResize, false );
+  }
+  function onWindowResize() {
+    windowHalfX = window.innerWidth / 2;
+    windowHalfY = window.innerHeight / 2;
+
+    //调整相机高度比
+    camera.aspect = window.innerWidth / window.innerHeight;
+    //更新相机投影矩阵，必须在参数发生变化后调用
+    camera.updateProjectionMatrix();
+    //调整渲染器大小
+    renderer.setSize( window.innerWidth, window.innerHeight );
+  }
+
+  function onDocumentMouseMove( event ) {
+    mouseX = event.clientX - windowHalfX;
+    mouseY = event.clientY - windowHalfY;
+  } 
+
+  function onDocumentTouchStart( event ) {
+    if ( event.touches.length === 1 ) {
+      event.preventDefault();
+
+      mouseX = event.touches[ 0 ].pageX - windowHalfX;
+      mouseY = event.touches[ 0 ].pageY - windowHalfY;
+    }
+  }
+
+  function onDocumentTouchMove( event ) {
+    if ( event.touches.length === 1 ) {
+      event.preventDefault();
+
+      mouseX = event.touches[ 0 ].pageX - windowHalfX;
+      mouseY = event.touches[ 0 ].pageY - windowHalfY;
+    }
+  }
+
+  function animate() {
+    requestAnimationFrame( animate );
+
+    render();
+    stats.update();
+  }
+
+  function render() {
+    //Date.now();返回自1970年1月1日 00:00:00 UTC到当前时间的毫秒数。
+    var time = Date.now() * 0.00005;
+    
+    //鼠标移动是调整相机位置
+    camera.position.x += ( mouseX - camera.position.x ) * 0.05;
+    camera.position.y += ( - mouseY - camera.position.y ) * 0.05;
+
+    camera.lookAt( scene.position );
+
+    //绕y轴旋转
+    for ( var i = 0; i < scene.children.length; i ++ ) {
+
+      var object = scene.children[ i ];
+      
+      //判断是否是粒子
+      if ( object instanceof THREE.Points ) {
+
+        object.rotation.y = time * ( i < 4 ? i + 1 : - ( i + 1 ) );
+
+      }
+
+    }
+
+    for ( var i = 0; i < materials.length; i ++ ) {
+
+      var color = parameters[ i ][ 0 ];
+      //渐变颜色
+      var h = ( 360 * ( color[ 0 ] + time ) % 360 ) / 360;
+      materials[ i ].color.setHSL( h, color[ 1 ], color[ 2 ] );
+
+    }
+
+    renderer.render( scene, camera );
+  }
+</script>
+{% endblock %}

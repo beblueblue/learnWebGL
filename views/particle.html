@@ -1,0 +1,118 @@
+{% extends "base.html" %} {% block main %}
+<style>
+  #container {
+				background: #000;
+				width: 400px;
+				height: 300px;
+			}
+</style>
+
+<div id="container"></div>
+<script type="text/javascript">
+	if ( ! Detector.webgl ) Detector.addGetWebGLMessage();
+	// @see http://paulirish.com/2011/requestanimationframe-for-smart-animating/
+	//定义模型变量
+  var camera, 
+      scene, 
+      renderer, 
+      stats, 
+      materials = [],
+			parameters,
+			particles,
+			geometry,
+			particleCount,
+			WIDTH = 400,
+	    HEIGHT = 300;;
+	window.requestAnimFrame = (function(){
+		return  window.requestAnimationFrame       || 
+						window.webkitRequestAnimationFrame || 
+						window.mozRequestAnimationFrame    || 
+						window.oRequestAnimationFrame      || 
+						window.msRequestAnimationFrame     || 
+						function(/* function */ callback, /* DOMElement */ element){
+							window.setTimeout(callback, 1000 / 60);
+						};
+	})();
+	init();
+	animate();	
+	
+	function init(){
+		//选用远景相机
+    camera = new THREE.PerspectiveCamera(45, WIDTH / HEIGHT, 0.1, 10000 );
+    camera.position.z = 300;
+		scene = new THREE.Scene();
+		
+		//采用缓存几何模型
+    var geometry = new THREE.BufferGeometry();
+    var vertices = [];
+    //定义粒子个数
+		particleCount = 1800;
+		
+		//引入纹理图片
+    var textureLoader = new THREE.TextureLoader();
+    var sprite1 = textureLoader.load( '/static/images/particle.png' );
+		
+		//随机生成粒子位置，R3空间[-250, 250]
+    for ( var i = 0; i < particleCount; i ++ ) {
+      var x = Math.random() * 500 - 250;
+      var y = Math.random() * 500 - 250;
+      var z = Math.random() * 500 - 250;
+      vertices.push( x, y, z );
+		}
+		geometry.addAttribute( 'position', new THREE.Float32BufferAttribute( vertices, 3 ) );
+		//定义材质
+		materials = new THREE.PointsMaterial( { size: 20, map: sprite1, blending: THREE.AdditiveBlending, depthTest: false, transparent : true } );
+		materials.color.set( '0xf00808' );
+		
+		particles = new THREE.Points( geometry, materials );
+		scene.add( particles );
+		//渲染器
+    renderer = new THREE.WebGLRenderer();
+    //设置设备像素比。通常用于HiDPI设备防止模糊输出canvas。
+    renderer.setPixelRatio( window.devicePixelRatio );
+    renderer.setSize( WIDTH, HEIGHT );
+		var $container = $('#container');
+		$container.append( renderer.domElement );
+		//监控fps
+    stats = new Stats();
+    document.body.appendChild( stats.dom );
+	}
+
+	// 帧循环
+	function animate() {
+		requestAnimationFrame( animate );
+
+    render();
+		stats.update();
+	}
+	function render(){
+		var pCount = particleCount*3;
+		var bufferObj = particles.geometry;
+		for ( var i = 0; i < scene.children.length; i ++ ) {
+			var object = scene.children[ i ];
+
+			//判断是否是粒子
+			if ( object instanceof THREE.Points ) {
+				object.rotation.x+= 0.02;
+				object.rotation.y += 0.01;
+			}
+			while(pCount--) {
+				if(pCount % 3 === 1){
+					// 获取单个粒子
+					var particle = bufferObj.attributes.position.array[pCount];
+					// 检查是否需要重置
+					if(particle < -200) {
+						bufferObj.attributes.position.array[pCount] = Math.random() * 500 - 250;
+					}
+					// 用随机数更新水平速度分量，并根据速度更新位置
+					bufferObj.attributes.position.array[pCount] -= Math.random() * 1;
+				}
+			}
+		}
+		//位置更新
+		bufferObj.attributes.position.needsUpdate = true;
+		// 画
+		renderer.render(scene, camera);
+	}
+	</script>
+{% endblock %}

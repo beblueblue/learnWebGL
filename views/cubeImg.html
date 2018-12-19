@@ -1,0 +1,145 @@
+{% extends "base.html" %} {% block main %}
+<style>
+body { margin: 0; }
+canvas { width: 100%; height: 100% }
+</style>
+<script src="/static/js/OrbitControls.js"></script>
+<script>
+  //定义模型变量
+  var camera, 
+      scene, 
+      renderer,
+      cube,
+      WIDTH = window.innerWidth,
+      HEIGHT = window.innerHeight,
+      windowHalfX = window.innerWidth / 2,
+      windowHalfY = window.innerHeight / 2;
+  var container;
+  var mouseX = 0, mouseY = 0;
+  var cube;
+
+  init();
+  animate();
+
+  function init(){
+     //场景，相机，渲染器初始化
+    scene = new THREE.Scene();
+    camera = new THREE.PerspectiveCamera( 45, WIDTH / HEIGHT, 0.1, 10000 );
+    renderer = new THREE.WebGLRenderer();
+    renderer.setSize( WIDTH, HEIGHT ); 
+    renderer.setPixelRatio( window.devicePixelRatio );
+    document.body.appendChild( renderer.domElement );
+
+    //设置阴影允许
+    renderer.shadowMapEnabled = true;
+    //创建一个自然光，自然光无处不在
+    var light1 = new THREE.AmbientLight(0xffffff);
+    //设置灯光的位置
+    light1.position.set( 1000 , 1000 , 1000 );
+    //将灯光加入场景
+    scene.add( light1 );
+    
+    //将相机放到x:1000 , y:1000 , z:1000的位置
+    camera.position.set( 1000 , 1000 , 1000 );
+    //设置相机的朝向，可以认为与相机镜头垂直的轴线应该和哪一个轴相交
+    camera.up.set( 0 , 1 , 0 );
+    //将相机的镜头对准x:0 , y:0 , z:0的位置 经过这个设置相机就被固定住了
+    camera.lookAt({x:0,y:0,z:0});
+
+    //给场景添加天空盒子纹理
+    var cubeTextureLoader = new THREE.CubeTextureLoader();
+    cubeTextureLoader.setPath( '/static/images/textures/' );
+        //六张图片分别是朝前的（posz）、朝后的（negz）、朝上的（posy）、朝下的（negy）、朝右的（posx）和朝左的（negx）。
+    var cubeTexture = cubeTextureLoader.load( [
+        'right.jpg', 'left.jpg',
+        'top.jpg', 'bottom.jpg',
+        'front.jpg', 'back.jpg'
+    ] );
+    // scene.background = cubeTexture;
+
+    //创建一个长宽高600的立方体
+    var geometry = new THREE.CubeGeometry( 600 , 600 , 600 );
+
+    //创建一个长宽高600的立方体
+    var geometry = new THREE.CubeGeometry( 600 , 600 , 600 );
+
+    //创建一个phone材质并且用图片作为纹理
+    var material = new THREE.MeshPhongMaterial( { map: THREE.ImageUtils.loadTexture('/static/images/textures/texture-atlas.jpg') } );
+
+    //建立UV映射
+    var bricks = [
+      new THREE.Vector2(0, 0.666),
+      new THREE.Vector2(0.5, 0.666),
+      new THREE.Vector2(0.5, 1),
+      new THREE.Vector2(0, 1)
+    ];
+    var clouds = [
+      new THREE.Vector2(0.5, 0.666),
+      new THREE.Vector2(1, 0.666),
+      new THREE.Vector2(1, 1),
+      new THREE.Vector2(0.5, 1)
+    ];
+    var crate = [
+      new THREE.Vector2(0, 0.333),
+      new THREE.Vector2(0.5, 0.333),
+      new THREE.Vector2(0.5, 0.666),
+      new THREE.Vector2(0, 0.666)
+    ];
+    var stone = [
+      new THREE.Vector2(0.5, 0.333),
+      new THREE.Vector2(1, 0.333),
+      new THREE.Vector2(1, 0.666),
+      new THREE.Vector2(0.5, 0.666)
+    ];
+    var water  = [
+      new THREE.Vector2(0, 0), 
+      new THREE.Vector2(.5, 0), 
+      new THREE.Vector2(.5, .333), 
+      new THREE.Vector2(0, .333)
+    ];
+    var wood   = [
+        new THREE.Vector2(.5, 0), 
+        new THREE.Vector2(1, 0), 
+        new THREE.Vector2(1, .333), 
+        new THREE.Vector2(.5, .333)
+    ];
+    console.log(geometry.faceVertexUvs);
+    // 清除现有的UV映射，geometry对象的faceVertexUvs属性包含该geometry各个面的坐标映射。
+    geometry.faceVertexUvs[0] = [];
+
+    // 立方体的每个面实际上是由2个三角形组成的。所以我们必须单独映射每个三角形
+    // 每个面的顶点坐标的定义顺序必须遵循逆时针方向。为了映射下三角，我们需要使用的顶点指数0，1和3，
+    // 而要映射上三角，我们需要使用索引1，2，和顶点的3。
+    geometry.faceVertexUvs[0][0] = [ bricks[0], bricks[1], bricks[3] ];
+    geometry.faceVertexUvs[0][1] = [ bricks[1], bricks[2], bricks[3] ];
+
+    geometry.faceVertexUvs[0][2] = [ clouds[0], clouds[1], clouds[3] ];
+    geometry.faceVertexUvs[0][3] = [ clouds[1], clouds[2], clouds[3] ];
+
+    geometry.faceVertexUvs[0][4] = [ crate[0], crate[1], crate[3] ];
+    geometry.faceVertexUvs[0][5] = [ crate[1], crate[2], crate[3] ];
+
+    geometry.faceVertexUvs[0][6] = [ stone[0], stone[1], stone[3] ];
+    geometry.faceVertexUvs[0][7] = [ stone[1], stone[2], stone[3] ];
+
+    geometry.faceVertexUvs[0][8] = [ water[0], water[1], water[3] ];
+    geometry.faceVertexUvs[0][9] = [ water[1], water[2], water[3] ];
+
+    geometry.faceVertexUvs[0][10] = [ wood[0], wood[1], wood[3] ];
+    geometry.faceVertexUvs[0][11] = [ wood[1], wood[2], wood[3] ];
+
+    cube = new THREE.Mesh(geometry,  material);
+
+    scene.add( cube );
+    var orbitCtl = new THREE.OrbitControls( camera );
+  }
+  //动态渲染
+  function animate() {
+    //normally 60 times per second
+    requestAnimationFrame( animate );
+    
+
+    renderer.render( scene, camera );
+  }
+</script>
+{% endblock %}

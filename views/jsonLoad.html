@@ -1,0 +1,141 @@
+{% extends "base.html" %} {% block main %}
+<style>
+  body {
+    background:#777;
+    padding:0;
+    margin:0;
+    overflow:hidden;
+  }
+</style>
+<script src="/static/js/OrbitControls.js"></script>
+<script src="/static/js/OBJLoader.js"></script>
+<script>
+  if ( ! Detector.webgl ) Detector.addGetWebGLMessage();
+  //定义模型变量
+  var camera, 
+      scene, 
+      renderer, 
+      stats,
+      WIDTH = window.innerWidth,
+      HEIGHT = window.innerHeight,
+      windowHalfX = window.innerWidth / 2,
+      windowHalfY = window.innerHeight / 2;
+  var container;
+  var mouseX = 0, mouseY = 0;
+
+  init();
+  animate();
+
+  function init(){
+    var container = document.createElement( 'div' );
+    document.body.appendChild( container );
+    
+    camera = new THREE.PerspectiveCamera( 45, WIDTH / HEIGHT, 0.1, 10000 );
+    camera.position.z = 1000;
+
+    scene = new THREE.Scene();
+    //给场景添加天空盒子纹理
+    var cubeTextureLoader = new THREE.CubeTextureLoader();
+        cubeTextureLoader.setPath( '/static/images/textures/' );
+        //六张图片分别是朝前的（posz）、朝后的（negz）、朝上的（posy）、朝下的（negy）、朝右的（posx）和朝左的（negx）。
+    var cubeTexture = cubeTextureLoader.load( [
+        'right.jpg', 'left.jpg',
+        'top.jpg', 'bottom.jpg',
+        'front.jpg', 'back.jpg'
+    ] );
+    scene.background = cubeTexture;
+    
+    //光源1为环境光
+    var ambientLight = new THREE.AmbientLight( 0xffffff, 0.8 );
+    scene.add( ambientLight );
+    //光源2为点光源
+    var pointLight = new THREE.PointLight( 0xffffff, 0.3 );
+    pointLight.position.set( 100, -100, 300);
+    scene.add( pointLight );
+    scene.add( camera );
+    
+    //模型辅助线
+    var axisHelper = new THREE.AxisHelper(500);
+    scene.add(axisHelper);
+
+    //引入OrbitControls插件，控制camera
+    var controls = new THREE.OrbitControls( camera );
+
+    //texture
+    var manager = new THREE.LoadingManager();
+    manager.onProgress = function (url, loaded, total) {
+      console.log(url, loaded, total);
+    };
+    var textureLoader = new THREE.TextureLoader(manager);
+    var texture = [];
+    texture.push(textureLoader.load( '/static/images/soccer.png '));
+    // texture.repeat.set(2, 2);
+    // texture.WrapS = THREE.ClampToEdgeWrapping;
+    // texture.WrapT = THREE.ClampToEdgeWrapping;
+    // texture.Offset = new THREE.Vector2(-0.1, -0.1);
+
+    //model
+    var onProgress = function (xhr) {
+      if ( xhr.lengthComputable ) {
+        var percentComplete = xhr.loaded / xhr.total * 100;
+        console.log( Math.round(percentComplete, 2) + '% downloaded' );
+      }
+    };
+    var onError = function (xhr) {
+      console.log('引入失败')
+    };
+    var loader = new THREE.JSONLoader(manager);
+    loader.load('/static/models/model.js', function ( geometry, materials ) {
+        var object = new THREE.Mesh( geometry, materials );
+        object.traverse( function ( child ) {
+          if ( child instanceof THREE.Mesh ) {
+            child.material[5].map = texture[0];
+            texture[0].wrapS = texture[0].wrapT = THREE.RepeatWrapping;
+            texture[0].offset.y = 200;
+            texture[0].matrixAutoUpdate = false; // 设置纹理属性matrixAutoUpdate为false以后，纹理将通过matrix属性设置的矩阵更新纹理显示
+            // child.material[4].map = texture[1];
+            for(let len = child.material.length, i = 0; i < len; i++){
+              child.material[i].side = THREE.DoubleSide;
+            }
+          }
+        });
+        object.position.y = -1300;
+        console.log(object)
+        scene.add( object );
+    }, onProgress, onError);
+
+    renderer = new THREE.WebGLRenderer();
+    renderer.setPixelRatio( window.devicePixelRatio );
+    renderer.setSize( window.innerWidth, window.innerHeight );
+    container.appendChild( renderer.domElement );
+
+    stats = new Stats();
+    container.appendChild( stats.dom );
+
+    // document.addEventListener( 'mousemove', onDocumentMouseMove, false );
+
+    window.addEventListener( 'resize', onWindowResize, false );
+  }
+  function onWindowResize() {
+    windowHalfX = window.innerWidth / 2;
+    windowHalfY = window.innerHeight / 2;
+
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+
+    renderer.setSize( window.innerWidth, window.innerHeight );
+  }
+  function animate() {
+
+    requestAnimationFrame( animate );
+
+    render();
+    stats.update();
+
+  }
+
+  function render() {
+    renderer.render( scene, camera );
+  }
+</script>
+{% endblock %}

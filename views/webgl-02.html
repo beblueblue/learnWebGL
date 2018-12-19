@@ -1,0 +1,302 @@
+{% extends "base.html" %} {% block main %}
+<link rel="stylesheet" type="text/css" href="/static/css/webgl-tutorials.css">
+<style>
+  .main-box {
+    background: #e8e8e8;
+    padding: 20px 30px;
+  }
+  .main-box>div+div {
+    margin-top: 10px;
+  }
+  canvas {
+    width: 90vw;
+    height: 30vh;
+    background: #fff;
+  }
+  .main-box .uiContainer {
+    top: 35px;
+    right: 120px;
+  }
+</style>
+<div class="main-box">
+  <div class="relative demo1">
+    <canvas class="draw"></canvas>
+    <div class="uiContainer">
+      <div class="ui">
+        <div class="x"></div>
+        <div class="y"></div>
+        <div class="angle"></div>
+        <div class="scaleX"></div>
+        <div class="scaleY"></div>
+      </div>
+    </div>
+  </div>
+  <div class="relative demo2">
+      <canvas class="draw"></canvas>
+      <div class="uiContainer">
+        <div class="ui">
+          <div class="x"></div>
+          <div class="y"></div>
+          <div class="angle"></div>
+          <div class="scaleX"></div>
+          <div class="scaleY"></div>
+        </div>
+      </div>
+    </div>
+</div>
+<script src="/static/js/webgl-utils.js"></script>
+<script src="/static/js/webgl-lessons-ui.js"></script>
+<script src="/static/js/m3.js"></script>
+<script id="2d-vertex-shader-demo1" type="notjs">
+  // an attribute will receive data from a buffer
+  attribute vec2 a_position;
+  
+  uniform mat3 u_matrix;
+
+  varying vec4 v_color;
+
+  // all shaders have a main function
+  void main() {
+    // 将位置和矩阵相乘
+    gl_Position = vec4((u_matrix * vec3(a_position, 1)).xy, 0, 1);
+    // 从裁减空间转换到颜色空间
+    // 裁减空间范围 -1.0 到 +1.0
+    // 颜色空间范围 0.0 到 1.0
+    v_color = gl_Position * 0.5 + 0.5;
+  }
+</script>
+<script id="2d-fragment-shader-demo1" type="notjs">
+    //片段着色器没有默认精度，所有我们需要设置一个精度
+    //mediump代表"medium precision"(中等精度)
+    precision mediump float;
+
+    varying vec4 v_color;
+    void main(){
+      //gl_FragColor是一个片段着色器主要设置的变量
+      gl_FragColor = v_color;
+    }
+</script>
+<script id="2d-vertex-shader-demo2" type="notjs">
+    // an attribute will receive data from a buffer
+    attribute vec2 a_position;
+    attribute vec4 a_color;
+    
+    uniform mat3 u_matrix;
+  
+    varying vec4 v_color;
+  
+    // all shaders have a main function
+    void main() {
+      // 将位置和矩阵相乘
+      gl_Position = vec4((u_matrix * vec3(a_position, 1)).xy, 0, 1);
+      v_color = a_color;
+    }
+  </script>
+  <script id="2d-fragment-shader-demo2" type="notjs">
+      //片段着色器没有默认精度，所有我们需要设置一个精度
+      //mediump代表"medium precision"(中等精度)
+      precision mediump float;
+  
+      varying vec4 v_color;
+      void main(){
+        //gl_FragColor是一个片段着色器主要设置的变量
+        gl_FragColor = v_color;
+      }
+  </script>
+<script>
+  "use strict";
+
+  function main(type){
+    var canvas = {}, gl = {};
+    canvas = $('.'+type+' .draw').get(0);
+    gl = canvas.getContext("webgl");
+    if (!gl) {
+        // 你不能使用WebGL！
+        console.log('浏览器需要升级');
+        return false;
+    }
+    //调用着色程序
+    var program = webglUtils.createProgramFromScripts(gl, ["2d-vertex-shader-"+type, "2d-fragment-shader-"+type]);
+    //获取属性值 (寻找顶点着色器中需要的数据)
+    var positionAttributeLocation = gl.getAttribLocation(program, "a_position");
+    switch(type){
+      case 'demo2':
+        var colorLocation = gl.getAttribLocation(program, "a_color");
+        break;
+      default:
+        break;
+    }
+    // look up uniform locations（找到uniform的位置）
+    var matrixLocation = gl.getUniformLocation(program, "u_matrix");
+    //创建缓冲
+    var positionBuffer = gl.createBuffer();
+    //绑定位置信息缓冲(positionBuffer)
+    gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+    // Set Geometry.（创建三角形）
+    setGeometry(gl, type);
+
+    switch(type){
+      case 'demo2':
+        // Create a buffer for the colors.
+        var colorBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
+        // Set the colors.
+        setColors(gl);
+        break;
+      default:
+        break;
+    }
+    
+    //绘制场景
+    var translation = [200, 150];
+    var angleInRadians = 0;
+    var scale = [1, 1];
+
+    drawScene();
+
+    //Setup a ui(设置控制台)
+    webglLessonsUI.setupSlider("."+type+" .x", {value: translation[0], slide: updatePosition(0), max: gl.canvas.width });
+    webglLessonsUI.setupSlider("."+type+" .y", {value: translation[1], slide: updatePosition(1), max: gl.canvas.height });
+    webglLessonsUI.setupSlider("."+type+" .angle", {slide: updateAngle, max: 360});
+    webglLessonsUI.setupSlider("."+type+" .scaleX", {value: scale[0], slide: updateScale(0), min: -5, max: 5, step: 0.01, precision: 2});
+    webglLessonsUI.setupSlider("."+type+" .scaleY", {value: scale[1], slide: updateScale(1), min: -5, max: 5, step: 0.01, precision: 2});
+    function updatePosition(index) {
+      return function(event, ui) {
+        translation[index] = ui.value;
+        drawScene();
+      }
+    }
+
+    function updateAngle(event, ui) {
+      var angleInDegrees = 360 - ui.value;
+      angleInRadians = angleInDegrees * Math.PI / 180;
+      drawScene();
+    }
+
+    function updateScale(index) {
+      return function(event, ui) {
+        scale[index] = ui.value;
+        drawScene();
+      }
+    }
+
+    // 场景绘制方法
+    function drawScene(){
+      webglUtils.resizeCanvasToDisplaySize(gl.canvas);
+      // Tell WebGL how to convert from clip space to pixels
+      gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
+      // 清空画布
+      gl.clear(gl.COLOR_BUFFER_BIT);
+      // 使用着色程序（一个着色器对）
+      gl.useProgram(program);
+      //启动对应属性
+      gl.enableVertexAttribArray(positionAttributeLocation);
+      // Bind the position buffer.
+      gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+      //指定从缓冲中(positionBuffer)读取数据(ARRAY_BUFFER)的方式
+      var size = 2;          //每次迭代运行提取两个单位数据
+      var type2 = gl.FLOAT;   //每个单位的数据类型为32为浮点数
+      var normalize = false; //不需要归一化数据
+      var stride = 0;        // 0 = 移动单位数量 * 每个单位占用内存（sizeof(type)）
+                             //每次迭代运行运动多少内存到下一个数据开始点
+      var offset = 0;        //从缓冲起始位置开始读取
+      gl.vertexAttribPointer(positionAttributeLocation, size, type2, normalize, stride, offset);
+
+      switch(type){
+        case 'demo2':
+          // Turn on the color attribute
+          gl.enableVertexAttribArray(colorLocation);
+
+          // Bind the color buffer.
+          gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
+          // 标准化标记（normalizeFlag）
+          // 将颜色数据转换为四个 UNSIGNED_BYTE ， 其中 0 表示 0.0，255 表示 1.0。
+          // 现在每个顶点只需要四个字节存储颜色值，省了 75% 空间。
+          normalize = true;
+          type2 = gl.UNSIGNED_BYTE;
+
+          size = 4;
+          gl.vertexAttribPointer(colorLocation, size, type2, normalize, stride, offset);
+          break;
+        default:
+          break;
+      }
+      
+      // Compute the matrix
+      var matrix = m3.projection(gl.canvas.clientWidth, gl.canvas.clientHeight);
+      matrix = m3.translate(matrix, translation[0], translation[1]);
+      matrix = m3.rotate(matrix, angleInRadians);
+      matrix = m3.scale(matrix, scale[0], scale[1]);
+      // Set the matrix
+      gl.uniformMatrix3fv(matrixLocation, false, matrix);
+  
+      //Draw the geometry
+      //运行着色程序
+      var primitiveType = gl.TRIANGLES;
+      var offset = 0;
+      //顶点着色器运行次数  
+      var count = 0;
+      switch(type){
+        case 'demo2':
+          count = 6;
+          break;
+        default:
+          count = 3;
+          break;
+      }
+      gl.drawArrays(primitiveType, offset, count);
+    }
+  }
+  // 定义一个三角形填充到缓冲里
+  function setGeometry(gl, type) {
+    var data = {};
+    switch(type){
+      case 'demo2':
+        data = new Float32Array([
+          -150, -100,
+           150, -100,
+          -150,  100,
+           150, -100,
+          -150,  100,
+           150,  100]);
+        break;
+      default:
+        data = new Float32Array([
+            0, -100,
+          150,  125,
+          -175,  100]);
+        break;
+    }
+    gl.bufferData(
+        gl.ARRAY_BUFFER,
+        data,
+        gl.STATIC_DRAW);
+  }
+  // 给矩形的两个三角形
+  // 设置颜色值并发到缓冲
+  function setColors(gl) {
+    // 生成随机颜色
+    var r1 = Math.random() * 256;
+    var b1 = Math.random() * 256;
+    var g1 = Math.random() * 256;
+    
+    //顶点颜色相同，我们传递的varying会被插值成相同的颜色
+    //顶点颜色不同，我们传递的varying会被插值成渐变色
+    //0 到 255.99999 之间
+    //这些数据在存入缓冲时，将被截取成Uint8Array 类型
+    gl.bufferData(
+        gl.ARRAY_BUFFER,
+        new Uint8Array(
+          [ Math.random() * 256, Math.random() * 256, Math.random() * 256, 255,
+            Math.random() * 256, Math.random() * 256, Math.random() * 256, 255,
+            Math.random() * 256, Math.random() * 256, Math.random() * 256, 255,
+            r1, b1, g1, 255,
+            r1, b1, g1, 255,
+            r1, b1, g1, 255]),
+        gl.STATIC_DRAW);
+  }
+  main('demo1');
+  main('demo2');
+</script>
+{% endblock %}
+

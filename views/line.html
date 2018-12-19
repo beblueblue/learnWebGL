@@ -1,0 +1,37 @@
+{% extends "base.html" %} {% block main %}
+<style>
+  body { margin: 0; }
+  canvas { width: 100%; height: 100% }
+</style>
+<script>
+  //场景，相机，渲染器初始化
+  var renderer = new THREE.WebGLRenderer();
+  renderer.setSize( window.innerWidth, window.innerHeight );
+  document.body.appendChild( renderer.domElement );
+
+  var camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 1, 500 );
+  camera.position.set( 0, 0, 100 );
+  camera.lookAt( new THREE.Vector3( 0, 0, 0 ) );
+
+  var scene = new THREE.Scene();
+  
+  //定义线的类型
+  var material = new THREE.LineBasicMaterial( { color: 0x0000ff } );
+  //Geometry简单,定义几何形状,BufferGeometry功能更强
+  //注意：在连续的向量顶点画线，而不是第一个和最后一个；
+  var geometry = new THREE.Geometry();
+  geometry.vertices.push(new THREE.Vector3( 0, 0, 0) );
+  geometry.vertices.push(new THREE.Vector3( 0, 10, 0) );
+  geometry.vertices.push(new THREE.Vector3( 10, 0, 0) );
+  //组合线的路径和类型
+  var line = new THREE.Line( geometry, material );
+  
+  var texture = new THREE.TextureLoader().load( "textures/water.jpg" );
+      texture.wrapS = THREE.RepeatWrapping;
+      texture.wrapT = THREE.RepeatWrapping;
+      texture.repeat.set( 4, 4 );
+  //渲染
+  scene.add( line );
+  renderer.render( scene, camera );
+</script>
+{% endblock %}

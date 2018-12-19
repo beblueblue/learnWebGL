@@ -1,0 +1,128 @@
+{% extends "base.html" %} {% block main %}
+<style>
+  body {
+    background:#777;
+    padding:0;
+    margin:0;
+    overflow:hidden;
+  }
+</style>
+<script src="/static/js/OrbitControls.js"></script>
+<script src="/static/js/OBJLoader.js"></script>
+<script>
+  if ( ! Detector.webgl ) Detector.addGetWebGLMessage();
+  //定义模型变量
+  var camera, 
+      scene, 
+      renderer, 
+      stats,
+      WIDTH = window.innerWidth,
+      HEIGHT = window.innerHeight,
+      windowHalfX = window.innerWidth / 2,
+      windowHalfY = window.innerHeight / 2;
+  var container;
+  var mouseX = 0, mouseY = 0;
+
+  init();
+  animate();
+
+  function init(){
+    var container = document.createElement( 'div' );
+    document.body.appendChild( container );
+    
+    camera = new THREE.PerspectiveCamera( 45, WIDTH / HEIGHT, 0.1, 2000 );
+    camera.position.z = 300;
+
+    scene = new THREE.Scene();
+    
+    //光源1为环境光
+    var ambientLight = new THREE.AmbientLight( 0xcccccc, 0.8 );
+    scene.add( ambientLight );
+    //光源2为点光源
+    var pointLight = new THREE.PointLight( 0xffffff, 0.6 );
+    pointLight.position.set( 50, 20, 50 );
+    scene.add( pointLight );
+    scene.add( camera );
+
+    //引入OrbitControls插件，控制camera
+    var controls = new THREE.OrbitControls( camera );
+
+    //texture
+    var manager = new THREE.LoadingManager();
+    manager.onProgress = function (url, loaded, total) {
+      console.log(url, loaded, total);
+    };
+    var textureLoader = new THREE.TextureLoader(manager);
+    var texture = textureLoader.load( '/static/images/textures/UV_Grid_Sm.jpg ');
+    // texture.repeat.set(2, 2);
+    // texture.WrapS = THREE.ClampToEdgeWrapping;
+    // texture.WrapT = THREE.ClampToEdgeWrapping;
+    // texture.Offset = new THREE.Vector2(-0.1, -0.1);
+
+    //model
+    var onProgress = function (xhr) {
+      if ( xhr.lengthComputable ) {
+        var percentComplete = xhr.loaded / xhr.total * 100;
+        console.log( Math.round(percentComplete, 2) + '% downloaded' );
+      }
+    };
+    var onError = function (xhr) {
+      console.log('引入失败')
+    };
+    var loader = new THREE.OBJLoader(manager);
+    loader.load('/static/models/male02.obj', function(object){
+      object.traverse( function ( child ) {
+        if ( child instanceof THREE.Mesh ) {
+          child.material.map = texture;
+        }
+      });
+      object.position.y = - 80;
+      console.log(object)
+      scene.add( object );
+    }, onProgress, onError);
+
+    renderer = new THREE.WebGLRenderer();
+    renderer.setPixelRatio( window.devicePixelRatio );
+    renderer.setSize( window.innerWidth, window.innerHeight );
+    container.appendChild( renderer.domElement );
+
+    stats = new Stats();
+    container.appendChild( stats.dom );
+
+    // document.addEventListener( 'mousemove', onDocumentMouseMove, false );
+
+    window.addEventListener( 'resize', onWindowResize, false );
+  }
+  function onWindowResize() {
+    windowHalfX = window.innerWidth / 2;
+    windowHalfY = window.innerHeight / 2;
+
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+
+    renderer.setSize( window.innerWidth, window.innerHeight );
+  }
+  // function onDocumentMouseMove( event ) {
+
+  //   mouseX = ( event.clientX - windowHalfX ) / 2;
+  //   mouseY = ( event.clientY - windowHalfY ) / 2;
+
+  // }
+  function animate() {
+
+    requestAnimationFrame( animate );
+
+    render();
+    stats.update();
+
+  }
+
+  function render() {
+    // camera.position.x += ( mouseX - camera.position.x ) * .05;
+    // camera.position.y += ( - mouseY - camera.position.y ) * .05;
+
+    // camera.lookAt( scene.position );
+    renderer.render( scene, camera );
+  }
+</script>
+{% endblock %}

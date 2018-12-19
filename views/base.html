@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="description" content="learn javascript by www.liaoxuefeng.com">
+    <title>{{ title }}</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <script src="/static/js/three.js"></script>
+    <script src="/static/js/jquery-1.11.2.min.js"></script>
+    <script src="/static/js/stats.min.js"></script>
+    <script src="/static/js/Detector.js"></script>
+</head>
+
+<body>
+    <header class="navbar navbar-static-top">
+        <a href="/" class="ml100 f16 fl blue {% if hideClass %}none{% endif %}">返回首页</a>
+        <div class="container tc blue mt20 mb20 f16">
+            探索THREE.js
+        </div>
+    </header>
+    {% block main %} {% endblock %}
+    <footer style="padding: 20px 0;">
+        <div class="container tc f14 fb">created by HHZ</div>
+    </footer>
+</body>
+
+</html>
