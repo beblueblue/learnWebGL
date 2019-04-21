@@ -755,6 +755,10 @@ text-decoration: underline;
   position: relative;
 }
 
+.absolute {
+  position: absolute;
+}
+
 .red {
   color: #ec4339 !important;
 }
@@ -800,4 +804,14 @@ text-decoration: underline;
   border: 1px solid #428bca;
   line-height: 1.5;
   cursor: pointer;
+}
+.main-btn-b {
+    display: inline-block;
+    padding: 4px 16px;
+    border: 1px solid #428bca;
+    border-radius: 4px;
+    color: #FFF;
+    background-color: #428bca;
+    line-height: 1.5;
+    cursor: pointer;
 }
