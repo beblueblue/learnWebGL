@@ -210,22 +210,92 @@
         }
 
         function changeTextrueImg(meshObj) {
-            if (!texture[vm.imgIndex]) {
-                texture.push( textureLoader.load( imgUrls[vm.imgIndex] ) );
-            }
-            if (vm.imgIndex !== 0) {
-                texture[vm.imgIndex].wrapS = THREE.MirroredRepeatWrapping;
-                texture[vm.imgIndex].wrapT = THREE.MirroredRepeatWrapping;
-                texture[vm.imgIndex].repeat.set( 1, 1 );
-                texture[vm.imgIndex].needsUpdate = true;
-            }
-            meshObj.traverse( function ( child ) {
+            var start = new Date();
+            var newTexture;
+
+            composeImgs(function (img) {
+                newTexture  = textureLoader.load( img );
+                meshObj.traverse( function ( child ) {
                 if ( child instanceof THREE.Mesh ) {
                     // 设置纹理映射
-                    child.material[0].map = texture[vm.imgIndex];
-                }
+                    composeImgs(function (img) {
+                        child.material[0].map = newTexture;
+                    });
+                    // child.material[0].map = texture[vm.imgIndex];
+                    }
+                });
+                render();
+                var end = new Date();
+                console.log(end - start);
             });
-            render()
+
+            // if (!texture[vm.imgIndex]) {
+            //     texture.push( textureLoader.load( imgUrls[vm.imgIndex] ) );
+            // }
+            // if (vm.imgIndex !== 0) {
+            //     texture[vm.imgIndex].wrapS = THREE.MirroredRepeatWrapping;
+            //     texture[vm.imgIndex].wrapT = THREE.MirroredRepeatWrapping;
+            //     texture[vm.imgIndex].repeat.set( 1, 1 );
+            //     texture[vm.imgIndex].needsUpdate = true;
+            // }
+        }
+        // 图片合成
+        function composeImgs( finishCallBack, imgUrl, baseUrl ){
+            var canvas = document.createElement( "canvas" );
+            var context = canvas.getContext( '2d' );
+            var manager = new THREE.LoadingManager( undefined, onProgress, onError );
+            var loader = new THREE.ImageLoader( manager );
+            var imgS = [];
+            // 纹理图大小
+            var backgroundWidth = 2048;
+            var backgroundHeight = 2048;
+            // 设计图大小
+            var imgWidth = 420;
+            var imgHeigth = 600;
+            // 偏移量
+            var leftSpace = 180;
+            var topSpace = 1300;
+            var imgUrls = [
+                '/static/images/texture.jpg',
+                'static/images/tree.png',
+                'static/images/tree-overflow.png'
+            ];
+            // 获取图片地址
+            baseUrl = baseUrl || imgUrls[0];
+            imgUrl = imgUrl || imgUrls[1];
+
+            // 图片全部载入后，合成图片
+            manager.onLoad = function () {
+                [].forEach.call(imgS, function ( ele, i ) {
+                    if( i === 0 ) {
+                        context.drawImage( ele, 0, 0 );
+                    } else {
+                        context.drawImage( ele, 0, 0, imgWidth, imgHeigth, leftSpace, topSpace, imgWidth, imgHeigth );
+                    }
+                });
+                finishCallBack( canvas.toDataURL( 'img/png' ) );
+                imgS.splice(1);
+            }
+
+            loader.load( baseUrl, function ( img ) {
+                onLoad( img );
+                loader.load( imgUrl, onLoad );
+            } );
+            
+            canvas.width = backgroundWidth;
+            canvas.height = backgroundHeight;
+            canvas.style.width = "2048px";
+            canvas.style.height = "2048px";
+
+            function onLoad( img ) {
+                imgS.push( img );
+            };
+            function onProgress( url, loaded, total ) {
+                console.log(url, loaded, total);
+            };
+            function onError( xhr ) {
+                console.log('model:' + xhr + '引入失败');
+            };
         }
     });
 </script>
