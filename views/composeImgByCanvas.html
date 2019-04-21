@@ -1,0 +1,52 @@
+{% extends "base.html" %} {% block main %}
+<style>
+  body { margin: 0; }
+</style>
+<canvas class="handle-img"></canvas>
+<script>
+  var canvas = document.querySelector(".handle-img");
+  var context = canvas.getContext('2d');
+  var manager = new THREE.LoadingManager( undefined, onProgress, onError );
+  var loader = new THREE.ImageLoader( manager );
+  var imgS = [];
+  var leftSpace = 180;
+  var topSpace = 1300;
+  var imgUrls = [
+      '/static/images/texture.jpg',
+      'static/images/tree.png',
+      'static/images/tree-overflow.png'
+  ];
+
+  manager.onLoad = function () {
+    console.log(imgS);
+    [].forEach.call(imgS, function (ele, i) {
+      if( i === 0 ) {
+        context.drawImage(ele, 0, 0);
+      } else {
+        context.drawImage(ele, 0, 0, 420, 600, leftSpace, topSpace, 420, 600);
+      }
+    })
+    imgS.splice(1);
+  }
+
+  loader.load( imgUrls[0], function (img) {
+    onLoad(img);
+    loader.load( imgUrls[1], onLoad );
+  } );
+  
+  canvas.width = "4096";
+  canvas.height = "4096";
+  canvas.style.width = "2048px";
+  canvas.style.height = "2048px";
+
+  function onLoad( img ) {
+      imgS.push(img);
+  };
+  function onProgress( url, loaded, total ) {
+      console.log(url, loaded, total);
+  };
+  function onError( xhr ) {
+      console.log('model:' + xhr + '引入失败');
+  };
+</script>
+{% endblock %}
