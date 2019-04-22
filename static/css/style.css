@@ -815,3 +815,11 @@ text-decoration: underline;
     line-height: 1.5;
     cursor: pointer;
 }
+.com-css-input {
+  padding: 6px 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  width: 120px;
+  color: #555;
+  background-color: #fff;
+}

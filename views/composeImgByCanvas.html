@@ -1,52 +1,126 @@
 {% extends "base.html" %} {% block main %}
 <style>
   body { margin: 0; }
-</style>
-<canvas class="handle-img"></canvas>
-<script>
-  var canvas = document.querySelector(".handle-img");
-  var context = canvas.getContext('2d');
-  var manager = new THREE.LoadingManager( undefined, onProgress, onError );
-  var loader = new THREE.ImageLoader( manager );
-  var imgS = [];
-  var leftSpace = 180;
-  var topSpace = 1300;
-  var imgUrls = [
-      '/static/images/texture.jpg',
-      'static/images/tree.png',
-      'static/images/tree-overflow.png'
-  ];
-
-  manager.onLoad = function () {
-    console.log(imgS);
-    [].forEach.call(imgS, function (ele, i) {
-      if( i === 0 ) {
-        context.drawImage(ele, 0, 0);
-      } else {
-        context.drawImage(ele, 0, 0, 420, 600, leftSpace, topSpace, 420, 600);
-      }
-    })
-    imgS.splice(1);
+  .btn-group-box {
+    width: 280px;
   }
+  canvas {
+    margin-left: 300px;
+    width: 100%;
+  }
+</style>
+<div class="relative">
+  <div class="absolute btn-group-box pl10">
+    <div><a class="ml10 reset-btn main-btn-b">清空设计图</a></div>
+    <div class="mt30">
+      <div><strong>背景纹理图设定（与模型纹理图绑定）：</strong></div>
+      <div class="mt10 ml5">宽度（px）：2048</div>
+      <div class="mt10 ml5">高度（px）：2048</div>
+    </div>
+    <div class="mt20">
+      <div><strong>设计图设定：</strong></div>
+      <div class="mt10 ml5"><a class="change-btn main-btn-b" data-id="0">图片更改</a></div>
+      <div class="mt10 ml5">宽度（px）：<input class="design-change com-css-input" type="text" name="change-design-width"></div>
+      <div class="mt10 ml5">高度（px）：<input class="design-change com-css-input" type="text" name="change-design-height"></div>
+      <div class="mt10 ml5">左偏移（px）：<input class="design-change com-css-input" type="text" name="change-design-left"></div>
+      <div class="mt10 ml5">上偏移（px）：<input class="design-change com-css-input" type="text" name="change-design-top"></div>
+    </div>
+    
+  </div>
+  <canvas class="handle-img"></canvas>
+</div>
+<script src="static/js/createComposeImgs.js"></script>
+<script>
+  var myCanvas = document.querySelector(".handle-img");
+  var baseUrl = '/static/images/backgroundImg.png';
+  var imgUrls = [
+    'static/images/tree.png',
+    'static/images/soccer.png',
+  ];
+  var imgConfigure = [
+    {
+      width: 420,
+      height: 600,
+      left: 180,
+      top: 1200
+    },
+    {
+      width: 150,
+      height: 155,
+      left: 1100,
+      top: 1250
+    },
+  ];
+  var composeImgs = new CreateComposeImgs({
+    canvas: myCanvas,
+    baseUrl: baseUrl,
+    foreUrl: [
+      {
+        url: imgUrls[0],
+        id: 0
+      },
+      {
+        url: imgUrls[1],
+        id: 1
+      },
+    ],
+    foreConfigure: [
+      {
+        leftSpace: imgConfigure[0].left,
+        topSpace: imgConfigure[0].top,
+      },
+      {
+        leftSpace: imgConfigure[1].left,
+        topSpace: imgConfigure[1].top,
+      },
+    ],
+  });
+  composeImgs.startDraw();
+  updateConfigure(imgConfigure[0]);
 
-  loader.load( imgUrls[0], function (img) {
-    onLoad(img);
-    loader.load( imgUrls[1], onLoad );
-  } );
-  
-  canvas.width = "4096";
-  canvas.height = "4096";
-  canvas.style.width = "2048px";
-  canvas.style.height = "2048px";
+  // 印刷图图片更改
+  $('.change-btn').click(function () {
+    let index = $(this).data( 'id' );
+    let newId = $(this).data( 'img-index' ) || 0;
 
-  function onLoad( img ) {
-      imgS.push(img);
-  };
-  function onProgress( url, loaded, total ) {
-      console.log(url, loaded, total);
-  };
-  function onError( xhr ) {
-      console.log('model:' + xhr + '引入失败');
-  };
+    newId = newId === 0 ? 1 : 0;
+
+    $(this).data( 'img-index', newId );
+    updateConfigure(composeImgs.foreConfigure[index]);
+    // 先清空指定印刷面
+    composeImgs.clearImgById( index );
+    // 再绘制
+    composeImgs.drawImg( { url: imgUrls[newId], id: index } );
+  });
+  $('.reset-btn').click(function () {
+    $('.change-btn').data( 'id', 2 );
+    composeImgs.clearImg();
+  });
+
+  // 印刷图位置更改
+  $('.design-change').change(function () {
+    let width = $('[name="change-design-width"]').val();
+    let height = $('[name="change-design-height"]').val();
+    let left = $('[name="change-design-left"]').val();
+    let top = $('[name="change-design-top"]').val();
+    let index = $(this).data('id') || 0;
+
+    composeImgs.adjustImg( { width, height, left, top, index } );
+  });
+
+  function updateConfigure( {width, height, left, top} ) {
+    if( width !== undefined ) {
+      $('[name="change-design-width"]').val(width);
+    }
+    if( height !== undefined ) {
+      $('[name="change-design-height"]').val(height);
+    }
+    if( left !== undefined ) {
+      $('[name="change-design-left"]').val(left);
+    }
+    if( top !== undefined ) {
+      $('[name="change-design-top"]').val(top);
+    }
+  }
 </script>
 {% endblock %}
