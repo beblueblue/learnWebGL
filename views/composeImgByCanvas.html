@@ -41,14 +41,14 @@
     {
       width: 420,
       height: 600,
-      left: 180,
-      top: 1200
+      leftSpace: 180,
+      topSpace: 1200
     },
     {
       width: 150,
       height: 155,
-      left: 1100,
-      top: 1250
+      leftSpace: 1100,
+      topSpace: 1250
     },
   ];
   var composeImgs = new CreateComposeImgs({
@@ -65,14 +65,8 @@
       },
     ],
     foreConfigure: [
-      {
-        leftSpace: imgConfigure[0].left,
-        topSpace: imgConfigure[0].top,
-      },
-      {
-        leftSpace: imgConfigure[1].left,
-        topSpace: imgConfigure[1].top,
-      },
+      imgConfigure[0],
+      imgConfigure[1],
     ],
   });
   composeImgs.startDraw();
@@ -108,18 +102,18 @@
     composeImgs.adjustImg( { width, height, left, top, index } );
   });
 
-  function updateConfigure( {width, height, left, top} ) {
+  function updateConfigure( {width, height, leftSpace, topSpace} ) {
     if( width !== undefined ) {
       $('[name="change-design-width"]').val(width);
     }
     if( height !== undefined ) {
       $('[name="change-design-height"]').val(height);
     }
-    if( left !== undefined ) {
-      $('[name="change-design-left"]').val(left);
+    if( leftSpace !== undefined ) {
+      $('[name="change-design-left"]').val(leftSpace);
     }
-    if( top !== undefined ) {
-      $('[name="change-design-top"]').val(top);
+    if( topSpace !== undefined ) {
+      $('[name="change-design-top"]').val(topSpace);
     }
   }
 </script>

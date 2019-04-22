@@ -14,7 +14,13 @@ var CreateComposeImgs;
     *           url: 图片地址
     *           id: 对应图片配置数组foreConfigure的索引
     *       }
-    *   foreConfigure: Array, 印刷图的相关配置
+    *   foreConfigure: Array, 印刷图的相关配置对象configureObj
+    *       configureObj： {
+    *           width: 150,
+    *           height: 155,
+    *           leftSpace: 1100,
+    *           topSpace: 1250
+    *       }
     *   leftSpace: Number, 图片绘制距离背景图左边缘的大小,（px）默认为0
     *   topSpace: Number, 图片绘制距离背景图上边缘的大小,（px）默认为0
     *   drawEnd: Function, 合成成功后的回调函数，此函数第一个参数为合成后图片的DataUrl
@@ -189,8 +195,8 @@ var CreateComposeImgs;
         let _scope = this;
         let configure = _scope.foreConfigure[index];
 
-        configure.foreWidth = Number(width) || 0;
-        configure.foreHeight = Number(height) || 0;
+        configure.width = Number(width) || 0;
+        configure.height = Number(height) || 0;
         configure.leftSpace = Number(left) || 0;
         configure.topSpace = Number(top) || 0;
         _scope.clearImg();
@@ -227,10 +233,12 @@ var CreateComposeImgs;
 
         imgObj = imgObj || _scope._getImgObjByID( id );
         configure = _scope.foreConfigure[imgObj.id];
+        configure.width = configure.width || 0;
+        configure.height = configure.height || 0;
 
         if ( imgObj.img ) {
-            if( _scope.foreWidth !== 0 && _scope.foreHeight !== 0 ) {
-                _scope.ctx.drawImage( imgObj.img, configure.leftSpace, configure.topSpace, configure.foreWidth, configure.foreHeight );
+            if( configure.width !== 0 && configure.height !== 0 ) {
+                _scope.ctx.drawImage( imgObj.img, configure.leftSpace, configure.topSpace, configure.width, configure.height );
             } else {
                 _scope.ctx.drawImage( imgObj.img, configure.leftSpace, configure.topSpace );
             }
