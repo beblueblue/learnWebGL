@@ -27,6 +27,11 @@ var CreateComposeImgs;
     *   
     * 方法
     * startDraw: 调用后，开始绘制
+    * getComposedImg: 返回合成后的印刷图
+    * clearImg: 清空所有面，保留背景
+    * clearImgById( id ): 清空指定面
+    * adjustImg( { width, height, left, top, index } ): 调整指定面位置
+    * drawImg: function ( { url = '', id = '' } ): 在现有图形上叠加新图
     * 
     * 实例属性说明
     * foreImg： Array，印刷图对象imgObj缓存数组
@@ -34,6 +39,8 @@ var CreateComposeImgs;
     *       img: 图片对象
     *       id: 图片对应配置项数组foreConfigure的索引值
     *   }
+    * foreConfigure: Array, 图片配置项configureObj缓存数组
+    * 
     */
   function composeImgs( options ){
     // 定义私有变量
@@ -66,10 +73,6 @@ var CreateComposeImgs;
         // 多面
         _scope.multiFlag = true;
     }
-    _scope.foreWidth = options.foreWidth || 0;
-    _scope.foreHeight = options.foreHeight || 0;
-    _scope.leftSpace = options.leftSpace || 0;
-    _scope.topSpace = options.topSpace || 0;
 
     this.startDraw = function () {
         let drawArr = [];
@@ -145,11 +148,11 @@ var CreateComposeImgs;
     // 清空指定印刷面
     clearImgById: function ( id ) {
         let _scope = this;
-        let index = _scope._getImgObjByID( id ).id;
+        let index = _scope._getImgObjByID( id ).index;
 
         if( index !== undefined ) {
             _scope.clearImg();
-            _scope.foreImg.splice( index - 1, 1 );
+            _scope.foreImg.splice( index, 1 );
             [].forEach.call( _scope.foreImg, function (ele) {
                 _scope._drayImgByIDOrObj( {
                     imgObj: ele
@@ -208,6 +211,13 @@ var CreateComposeImgs;
         } );
     },
 
+    // 获取合成后的印刷图
+    getComposedImg: function () {
+        let _scope = this;
+
+        return _scope.canvas.toDataURL( 'img/png' )
+    },
+
     // 通过印刷图id来获取，图片在缓存数组foreImg中的图片对象imgObj
     _getImgObjByID: function ( id ) {
         let _scope = this;
@@ -217,7 +227,7 @@ var CreateComposeImgs;
             let ele = _scope.foreImg[i];
             if ( Number( id ) === Number( ele.id ) ) {
                 imgObj = ele;
-                return imgObj;
+                return { obj: imgObj, index: i };
             }
         }
         return imgObj;
@@ -231,7 +241,7 @@ var CreateComposeImgs;
         let _scope = this;
         let configure = {};
 
-        imgObj = imgObj || _scope._getImgObjByID( id );
+        imgObj = imgObj || _scope._getImgObjByID( id ).obj;
         configure = _scope.foreConfigure[imgObj.id];
         configure.width = configure.width || 0;
         configure.height = configure.height || 0;

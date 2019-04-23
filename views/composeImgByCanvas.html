@@ -19,11 +19,20 @@
     </div>
     <div class="mt20">
       <div><strong>设计图设定：</strong></div>
-      <div class="mt10 ml5"><a class="change-btn main-btn-b" data-id="0">图片更改</a></div>
-      <div class="mt10 ml5">宽度（px）：<input class="design-change com-css-input" type="text" name="change-design-width"></div>
-      <div class="mt10 ml5">高度（px）：<input class="design-change com-css-input" type="text" name="change-design-height"></div>
-      <div class="mt10 ml5">左偏移（px）：<input class="design-change com-css-input" type="text" name="change-design-left"></div>
-      <div class="mt10 ml5">上偏移（px）：<input class="design-change com-css-input" type="text" name="change-design-top"></div>
+      <div class="change-group" data-id="0">
+        <div class="mt10 ml5"><a class="change-btn main-btn-b" data-id="0" data-img-index="0">图片更改</a></div>
+        <div class="mt10 ml5">宽度（px）：<input class="design-change com-css-input" type="text" name="change-design-width"></div>
+        <div class="mt10 ml5">高度（px）：<input class="design-change com-css-input" type="text" name="change-design-height"></div>
+        <div class="mt10 ml5">左偏移（px）：<input class="design-change com-css-input" type="text" name="change-design-left"></div>
+        <div class="mt10 ml5">上偏移（px）：<input class="design-change com-css-input" type="text" name="change-design-top"></div>
+      </div>
+      <div class="change-group" data-id="1">
+        <div class="mt10 ml5"><a class="change-btn main-btn-b" data-id="1" data-img-index="1">图片更改(背面)</a></div>
+        <div class="mt10 ml5">宽度（px）：<input class="design-change com-css-input" type="text" name="change-design-width"></div>
+        <div class="mt10 ml5">高度（px）：<input class="design-change com-css-input" type="text" name="change-design-height"></div>
+        <div class="mt10 ml5">左偏移（px）：<input class="design-change com-css-input" type="text" name="change-design-left"></div>
+        <div class="mt10 ml5">上偏移（px）：<input class="design-change com-css-input" type="text" name="change-design-top"></div>
+      </div>
     </div>
     
   </div>
@@ -42,13 +51,15 @@
       width: 420,
       height: 600,
       leftSpace: 180,
-      topSpace: 1200
+      topSpace: 1200,
+      index: 0
     },
     {
       width: 150,
       height: 155,
       leftSpace: 1100,
-      topSpace: 1250
+      topSpace: 1250,
+      index: 1
     },
   ];
   var composeImgs = new CreateComposeImgs({
@@ -71,11 +82,12 @@
   });
   composeImgs.startDraw();
   updateConfigure(imgConfigure[0]);
+  updateConfigure(imgConfigure[1]);
 
   // 印刷图图片更改
   $('.change-btn').click(function () {
     let index = $(this).data( 'id' );
-    let newId = $(this).data( 'img-index' ) || 0;
+    let newId = $(this).data( 'img-index' );
 
     newId = newId === 0 ? 1 : 0;
 
@@ -87,33 +99,35 @@
     composeImgs.drawImg( { url: imgUrls[newId], id: index } );
   });
   $('.reset-btn').click(function () {
-    $('.change-btn').data( 'id', 2 );
+    composeImgs.foreImg = [];
     composeImgs.clearImg();
   });
 
   // 印刷图位置更改
   $('.design-change').change(function () {
-    let width = $('[name="change-design-width"]').val();
-    let height = $('[name="change-design-height"]').val();
-    let left = $('[name="change-design-left"]').val();
-    let top = $('[name="change-design-top"]').val();
-    let index = $(this).data('id') || 0;
+    let $par = $(this).closest('.change-group');
+    let width = $par.find('[name="change-design-width"]').val();
+    let height = $par.find('[name="change-design-height"]').val();
+    let left = $par.find('[name="change-design-left"]').val();
+    let top = $par.find('[name="change-design-top"]').val();
+    let index = $par.data('id') || 0;
 
     composeImgs.adjustImg( { width, height, left, top, index } );
   });
 
-  function updateConfigure( {width, height, leftSpace, topSpace} ) {
+  function updateConfigure( { width, height, leftSpace, topSpace, index } ) {
+    let $par = $(`.change-group[data-id="${index}"]`);
     if( width !== undefined ) {
-      $('[name="change-design-width"]').val(width);
+      $par.find('[name="change-design-width"]').val(width);
     }
     if( height !== undefined ) {
-      $('[name="change-design-height"]').val(height);
+      $par.find('[name="change-design-height"]').val(height);
     }
     if( leftSpace !== undefined ) {
-      $('[name="change-design-left"]').val(leftSpace);
+      $par.find('[name="change-design-left"]').val(leftSpace);
     }
     if( topSpace !== undefined ) {
-      $('[name="change-design-top"]').val(topSpace);
+      $par.find('[name="change-design-top"]').val(topSpace);
     }
   }
 </script>
