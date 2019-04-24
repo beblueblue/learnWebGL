@@ -30,7 +30,7 @@ var CreateComposeImgs;
     * getComposedImg: 返回合成后的印刷图
     * clearImg: 清空所有面，保留背景
     * clearImgById( id ): 清空指定面
-    * adjustImg( { width, height, left, top, index } ): 调整指定面位置
+    * adjustImg( { width, height, leftSpace, topSpace, index } ): 调整指定面位置
     * drawImg: function ( { url = '', id = '' } ): 在现有图形上叠加新图
     * 
     * 实例属性说明
@@ -42,6 +42,8 @@ var CreateComposeImgs;
     * foreConfigure: Array, 图片配置项configureObj缓存数组
     * 
     */
+  let loaderTotal = 0;
+  let loaderEnd = 0;
   function composeImgs( options ){
     // 定义私有变量
     let _scope = this;
@@ -67,6 +69,8 @@ var CreateComposeImgs;
     _scope.foreUrl = options.foreUrl;
     _scope.foreImg = [];
     _scope.foreConfigure = options.foreConfigure || [];
+
+    _scope.onload = options.onload || null;
     // 多面设计标志位，默认单面
     _scope.multiFlag = false;
     if ( _scope.foreUrl && Array.isArray( _scope.foreUrl ) ) {
@@ -84,10 +88,10 @@ var CreateComposeImgs;
         if ( _scope.baseUrl ) {
             _scope.baseImg = new Image();
             _scope.baseImg.src = options.baseUrl;
-            _scope.baseImg.onload = function(){
+            if ( _scope.baseImg.complete ) {
                 // 绘制背景图
                 _scope.ctx.drawImage( _scope.baseImg, 0, 0 );
-                
+                                    
                 // 处理印刷图
                 if ( _scope.multiFlag ) {
                     drawArr = _scope.foreUrl;
@@ -105,7 +109,37 @@ var CreateComposeImgs;
                         id: ele.id,
                     } );
                 } );
-            };
+            } else {
+                loaderTotal++;
+                _scope.baseImg.onload = function(){
+                    loaderEnd++;
+                    // 绘制背景图
+                    _scope.ctx.drawImage( _scope.baseImg, 0, 0 );
+                    
+                    // 处理印刷图
+                    if ( _scope.multiFlag ) {
+                        drawArr = _scope.foreUrl;
+                    } else {
+                        drawArr.push( _scope.foreUrl );
+                        _scope.drawImg( {
+                            url: _scope.foreUrl.url, 
+                            id: _scope.foreUrl.id,
+                        } );
+                    }
+                    // 绘制设计图
+                    [].forEach.call( drawArr, function (ele) {
+                        _scope.drawImg( {
+                            url: ele.url, 
+                            id: ele.id,
+                        } );
+                    } );
+                    if ( loaderTotal === loaderEnd ) {
+                        if ( typeof _scope.onload === 'function' ) {
+                            _scope.onload();
+                        }
+                    }
+                };
+            }
         } else {
             _scope.ctx.fillStyle = _scope.canvasColor;
             _scope.ctx.fillRect( 0, 0, _scope.canvasWidth, _scope.canvasHeight );
@@ -168,13 +202,14 @@ var CreateComposeImgs;
     } ) {
         let _scope = this;
         let img = null;
+        let imgObj;
 
         img = new Image();
         img.src = url;
         
         if( url ) {
-            img.onload = function(){
-                let imgObj = {
+            if ( img.complete ) {
+                imgObj = {
                     img,
                     id,
                 };
@@ -182,7 +217,25 @@ var CreateComposeImgs;
                 _scope._drayImgByIDOrObj( { imgObj } );
                 // 释放图片内存
                 img = null;
-            };
+            } else {
+                loaderTotal++;
+                img.onload = function(){
+                    loaderEnd++;
+                    imgObj = {
+                        img,
+                        id,
+                    };
+                    _scope.foreImg.push( imgObj );
+                    _scope._drayImgByIDOrObj( { imgObj } );
+                    if ( loaderTotal === loaderEnd ) {
+                        if ( typeof _scope.onload === 'function' ) {
+                            _scope.onload();
+                        }
+                    }
+                    // 释放图片内存
+                    img = null;
+                };
+            }
         }
         
     },
@@ -191,8 +244,8 @@ var CreateComposeImgs;
     adjustImg: function ( { 
         width, 
         height, 
-        left, 
-        top,
+        leftSpace, 
+        topSpace,
         index, 
     } ) {
         let _scope = this;
@@ -200,8 +253,8 @@ var CreateComposeImgs;
 
         configure.width = Number(width) || 0;
         configure.height = Number(height) || 0;
-        configure.leftSpace = Number(left) || 0;
-        configure.topSpace = Number(top) || 0;
+        configure.leftSpace = Number(leftSpace) || 0;
+        configure.topSpace = Number(topSpace) || 0;
         _scope.clearImg();
 
         [].forEach.call( _scope.foreImg, function (ele) {

@@ -1,33 +1,233 @@
 {% extends "base.html" %} {% block main %}
 <style>
-  body {
-    background:#777;
-    padding:0;
-    margin:0;
-    overflow:hidden;
+  #designer-box {
+    margin-left: 350px;
+    width: calc(100% - 350px);
+    height: calc(100vh - 145px);
   }
-  .control-box {
-      width: 100vw;
-
-      justify-content: flex-end;
+  .btn-group-box {
+    width: 320px;
+  }
+  .mr12 {
+      margin-right: 12px;
   }
 </style>
-<section class="relative" id="vue-box">
-    <div class="absolute">
-        <div class="control-box display-flex">
-            <div class="tl control-group">
-                <a class="import-img-btn main-btn-b" @click="changeTextrue()">更换纹理图片（印刷图）</a>
+<div id="vue-box" class="fix w100">
+    <div class="fl btn-group-box pl10">
+        <div>
+            <a class="ml10 main-btn-b" @click="initImg">初始化印刷图</a>
+            <a class="ml10 main-btn-b" @click="clearImg">清空印刷图</a>
+        </div>
+
+        <div class="mt30" v-if="initFlag === true">
+            <div><strong>背景纹理图设定（与模型纹理图绑定）：</strong></div>
+            <div class="mt10 ml5">宽度（px）：2048</div>
+            <div class="mt10 ml5">高度（px）：2048</div>
+        </div>
+        <div class="mt20" v-if="initFlag === true">
+            <div><strong>设计图设定：</strong>
+            <div class="change-group" v-for="(item, index) in foreConfigure" :key="item.id">
+                <div v-if="index < 2" class="mt10 ml5">
+                    <a class="main-btn-b" 
+                       v-html="'图片更改：设计面' + (index + 1)" 
+                       @click="repaitImg( item.id )"></a>
+                    <a class="ml10 main-btn-b" @click="deleteDesign( index )">删除设计面</a>
+                </div>
+                <div class="mt10" v-else>
+                    <span v-html="'设计面' + (index + 1)"></span>
+                    <a class="ml10 main-btn-b" @click="deleteDesign( index )">删除设计面</a>
+                </div>
+                <div class="mt10 ml5">
+                    <span class="mr12">宽度（px）：</span>
+                    <a class="ml5 main-btn-b small" @mousedown="holdDown( 'width', index, true )" @mouseup="holdUp" v-html="'-' + addValue"></a>
+                    <input class="com-css-input" type="text" @change="adjustImg( index )" v-model="item.width">
+                    <a class="ml5 main-btn-b small" @mousedown="holdDown( 'width', index )" @mouseup="holdUp" v-html="'+' + addValue"></a>
+                </div>
+                <div class="mt10 ml5">
+                    <span class="mr12">高度（px）：</span>
+                    <a class="ml5 main-btn-b small" @mousedown="holdDown( 'height', index, true )" @mouseup="holdUp" v-html="'-' + addValue"></a>
+                    <input class="com-css-input" type="text" @change="adjustImg( index )" v-model="item.height">
+                    <a class="ml5 main-btn-b small" @mousedown="holdDown( 'height', index )" @mouseup="holdUp" v-html="'+' + addValue"></a>
+                </div>
+                <div class="mt10 ml5">
+                    左偏移（px）：
+                    <a class="ml5 main-btn-b small" @mousedown="holdDown( 'leftSpace', index, true )" @mouseup="holdUp" v-html="'-' + addValue"></a>
+                    <input class="com-css-input" type="text" @change="adjustImg( index )" v-model="item.leftSpace">
+                    <a class="ml5 main-btn-b small" @mousedown="holdDown( 'leftSpace', index )" @mouseup="holdUp" v-html="'+' + addValue"></a>
+                </div>
+                <div class="mt10 ml5">
+                    上偏移（px）：
+                    <a class="ml5 main-btn-b small" @mousedown="holdDown( 'topSpace', index, true )" @mouseup="holdUp" v-html="'-' + addValue"></a>
+                    <input class="com-css-input" type="text" @change="adjustImg( index )" v-model="item.topSpace">
+                    <a class="ml5 main-btn-b small" @mousedown="holdDown( 'topSpace', index )" @mouseup="holdUp" v-html="'+' + addValue"></a>
+                </div>
             </div>
+            <div class="mt20"><a class="ml5 main-btn-b" @click="addDesign">新增设计面</a></div></div>
         </div>
     </div>
-</section>
-<section id="designer-box"></section>
+    <div id="designer-box"></div>
+</div>
 <script src="/static/js/OrbitControls.js"></script>
-<script src="/static/js/OBJLoader.js"></script>
 <script src="/static/js/three_OBJExporter.js"></script>
 <script src="/static/js/vue.min.js"></script>
+<script src="static/js/CreateComposeImgs.js"></script>
 <script>
+    var vm;
+    var meshObj;
     $(function () {
+        var backgroundImg = '/static/images/bg_img.jpg';
+        var imgUrls = [
+            'static/images/tree.png',
+            'static/images/design-img1.png',
+            'static/images/design-img2.png',
+            'static/images/design-img3.png',
+        ];
+        var uvImg = 'static/images/textures/UV_Grid_Sm.jpg';
+        var imgConfigure = [
+            {
+                width: 420,
+                height: 600,
+                leftSpace: 200,
+                topSpace: 1250,
+                id: 0,
+            },
+            {
+                width: 420,
+                height: 600,
+                leftSpace: 1000,
+                topSpace: 1250,
+                id: 1,
+
+            },
+        ];
+        var foreUrls = [
+            {
+                url: imgUrls[0],
+                id: 0
+            },
+            {
+                url: imgUrls[1],
+                id: 1
+            },
+        ];
+        var composeImgs = new CreateComposeImgs({
+            baseUrl: backgroundImg,
+            foreUrl: foreUrls,
+            foreConfigure: imgConfigure,
+            onload: onload,
+        });
+        function onload() {
+            let texture = composeImgs.getComposedImg();
+            let newTexture  = textureLoader.load( texture );
+            meshObj.traverse( function ( child ) {
+                if ( child instanceof THREE.Mesh ) {
+                    // 设置纹理映射
+                    child.material[0].map = newTexture;
+                }
+            });
+        }
+        
+        // 交互控制
+        vm = new Vue({
+            el: '#vue-box',
+            data: {
+                foreUrl: foreUrls,
+                foreConfigure: imgConfigure,
+                composeImgs: composeImgs,
+                texture: '/static/images/bg_img.jpg',
+                initFlag: false,
+                imgChageObj: {
+                    0: 0,
+                    1: 1,
+                },
+                timer: null,
+                startTime: 0,
+                endTime: 0,
+                addValue: 10,
+            },
+            methods: {
+                // 清除印刷图
+                clearImg() {
+                    this.composeImgs.foreImg = [];
+                    this.composeImgs.clearImg();
+                    this.resetTexture();
+                },
+                // 初始化印刷图
+                initImg() {
+                    this.composeImgs.startDraw();
+                    this.resetTexture();
+                    this.initFlag = true;
+                },
+                // 重绘指定面
+                repaitImg( id ) {
+                    this.imgChageObj[id] += 1;
+                    if( this.imgChageObj[id] === 4 ) {
+                        this.imgChageObj[id] = 0;
+                    }
+                    // 先清空指定印刷面
+                    this.composeImgs.clearImgById( id );
+                    // 再绘制
+                    this.composeImgs.drawImg( { url: imgUrls[this.imgChageObj[id]], id } );
+                    this.resetTexture();
+                },
+                // 调整指定面
+                adjustImg( index ) {
+                    this.composeImgs.adjustImg( this.foreConfigure[index] );
+                    throttle( this.resetTexture, 100, 200 )();
+                },
+                // 鼠标长按事件
+                holdDown( key, index, reduceFlag ) {
+                    let _this = this;
+
+                    _this.startTime = this.startTime || new Date();
+                    _this.timer = setInterval( function() {
+                        reduceFlag ? _this.foreConfigure[index][key] -= _this.addValue : _this.foreConfigure[index][key] += _this.addValue;
+                        _this.composeImgs.adjustImg( _this.foreConfigure[index] );
+                        _this.resetTexture();
+                    }, 5 );
+                },
+                holdUp() {
+                    if ( this.timer ) {
+                        clearInterval(this.timer);
+                    }
+                },
+                // 增加设计面
+                addDesign() {
+                    let _this = this;
+                    let id = _this.foreUrl.length > 0 ? _this.foreUrl[_this.foreUrl.length - 1].id + 1 : 0;
+
+                    _this.foreUrl.push( {
+                        url: uvImg,
+                        id,
+                    } );
+                    _this.foreConfigure.push( {
+                        width: 400,
+                        height: 200,
+                        leftSpace: 250,
+                        topSpace: 670,
+                        id,
+                    }, );
+                    _this.composeImgs.drawImg( { url: uvImg, id } );
+                    _this.resetTexture();
+                },
+                // 删除设计面
+                deleteDesign( index ) {
+                    let _this = this;
+
+                    _this.composeImgs.clearImgById( _this.foreUrl[index].id );
+                    _this.foreUrl.splice( index, 1 );
+                    _this.foreConfigure.splice( index, 1 );
+                    _this.resetTexture();
+                },
+                // 绘制模型纹理
+                resetTexture() {
+                    onload();
+                },
+            },
+        });
+
+
+
         // WebGL能力检测
         if ( ! Detector.webgl ) {
             Detector.addGetWebGLMessage();
@@ -37,46 +237,27 @@
         var scene;
         var renderer;
         var stats;
-        var WIDTH = window.innerWidth;
-        var HEIGHT = window.innerHeight;
-        var windowHalfX = window.innerWidth / 2;
-        var windowHalfY = window.innerHeight / 2;
+        var WIDTH;
+        var HEIGHT;
+        var windowHalfX;
+        var windowHalfY;
         var container;
         var mouseX = 0, mouseY = 0;
 
         // Mesh对象
-        var meshObj;
+        // meshObj;
         // model纹理载入器
         var textureLoader;
         // model纹理
         var texture;
 
-        // 初始纹理图路径
-        var imgUrls = [
-            '/static/images/texture.jpg',
-            'static/images/tree.png',
-            'static/images/tree-overflow.png'
-        ];
-
         // 观察距离（待研究）
-        var viewPosition = -1300;
+        var viewPositionY = -1300;
+        var viewPositionX = 0;
+        var viewPositionZ = 0;
 
         init();
         animate();
-
-        // 交互控制
-        var vm = new Vue({
-            el: '#vue-box',
-            data: {
-                imgIndex: 0
-            },
-            methods: {
-                changeTextrue() {
-                    this.imgIndex = this.imgIndex === 2 ? 0 : this.imgIndex + 1;
-                    changeTextrueImg(meshObj);
-                }
-            }
-        });
 
         function init(){
             // 模型辅助线
@@ -112,8 +293,12 @@
             // 容器变量
             var container = document.getElementById( 'designer-box' );
 
+            WIDTH = container.offsetWidth;
+            HEIGHT = container.offsetHeight;
+            windowHalfX = WIDTH / 2;
+            windowHalfY = HEIGHT / 2;
             camera = new THREE.PerspectiveCamera( 45, WIDTH / HEIGHT, 0.1, 10000 );
-            camera.position.z = 1000;
+            camera.position.z = 1200;
 
             scene = new THREE.Scene();
             //给场景添加天空盒子纹理
@@ -132,7 +317,7 @@
             scene.add( ambientLight );
             //光源2为点光源
             pointLight = new THREE.PointLight( 0xffffff, 0.3 );
-            pointLight.position.set( 100, -100, 300);
+            pointLight.position.set( 0, 2000, 0);
             scene.add( pointLight );
             scene.add( camera );
 
@@ -143,16 +328,18 @@
             scene.add(axisHelper);
 
             //引入OrbitControls插件，控制camera
-            controls = new THREE.OrbitControls( camera );
+            controls = new THREE.OrbitControls( camera, container );
+            // 静止键盘控制
+            controls.enableKeys = false;
 
             // texture载入
             manager = new THREE.LoadingManager();
             manager.onProgress = function ( url, loaded, total ) {
-                console.log(url, loaded, total);
+                // console.log(url, loaded, total);
             };
             textureLoader = new THREE.TextureLoader( manager );
             texture = [];
-            texture.push(textureLoader.load( imgUrls[0] ));
+            texture.push(textureLoader.load( backgroundImg ));
 
             // model载入过程监控
             onProgress = function ( xhr ) {
@@ -174,28 +361,37 @@
                         child.material[0].map = texture[0];
                     }
                 });
-                meshObj.position.y = viewPosition;
+                meshObj.position.y = viewPositionY;
+                meshObj.position.x = viewPositionX;
+                meshObj.position.z = viewPositionZ;
                 scene.add( meshObj );
             }, onProgress, onError );
 
             renderer = new THREE.WebGLRenderer();
             renderer.setPixelRatio( window.devicePixelRatio );
-            renderer.setSize( window.innerWidth, window.innerHeight );
+            renderer.setSize( WIDTH, HEIGHT );
+            renderer.setClearColor( 0xffffff );
             container.appendChild( renderer.domElement );
 
             stats = new Stats();
             container.appendChild( stats.dom );
 
-            window.addEventListener( 'resize', onWindowResize, false );
+            window.addEventListener( 'resize', throttle( function() {
+                onWindowResize(container);
+                throttle()
+            }, 100, 200 ), false );
         }
-        function onWindowResize() {
-            windowHalfX = window.innerWidth / 2;
-            windowHalfY = window.innerHeight / 2;
+        function onWindowResize(container) {
+            let width = container.offsetWidth;
+            let height = container.offsetHeight;
 
-            camera.aspect = window.innerWidth / window.innerHeight;
+            windowHalfX = width / 2;
+            windowHalfY = height / 2;
+
+            camera.aspect = width / height;
             camera.updateProjectionMatrix();
 
-            renderer.setSize( window.innerWidth, window.innerHeight );
+            renderer.setSize( width, height );
         }
         function animate() {
 
@@ -208,37 +404,22 @@
         function render() {
             renderer.render( scene, camera );
         }
-
-        function changeTextrueImg(meshObj) {
-            var start = new Date();
-            var newTexture;
-
-            composeImgs(function (img) {
-                newTexture  = textureLoader.load( img );
-                meshObj.traverse( function ( child ) {
-                if ( child instanceof THREE.Mesh ) {
-                    // 设置纹理映射
-                    composeImgs(function (img) {
-                        child.material[0].map = newTexture;
-                    });
-                    // child.material[0].map = texture[vm.imgIndex];
-                    }
-                });
-                render();
-                var end = new Date();
-                console.log(end - start);
-            });
-
-            // if (!texture[vm.imgIndex]) {
-            //     texture.push( textureLoader.load( imgUrls[vm.imgIndex] ) );
-            // }
-            // if (vm.imgIndex !== 0) {
-            //     texture[vm.imgIndex].wrapS = THREE.MirroredRepeatWrapping;
-            //     texture[vm.imgIndex].wrapT = THREE.MirroredRepeatWrapping;
-            //     texture[vm.imgIndex].repeat.set( 1, 1 );
-            //     texture[vm.imgIndex].needsUpdate = true;
-            // }
+        function throttle( method, delay, duration ){
+            var timer=null, begin=new Date();
+            return function(){
+                var context=this, args=arguments, current=new Date();;
+                clearTimeout(timer);
+                if(current-begin>=duration){
+                    method.apply(context,args);
+                    begin=current;
+                }else{
+                    timer=setTimeout(function(){
+                        method.apply(context,args);
+                    },delay);
+                }
+            }
         }
+
         // 图片合成
         function composeImgs( finishCallBack, imgUrl, baseUrl ){
             var canvas = document.createElement( "canvas" );

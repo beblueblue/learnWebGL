@@ -34,14 +34,13 @@
         <div class="mt10 ml5">上偏移（px）：<input class="design-change com-css-input" type="text" name="change-design-top"></div>
       </div>
     </div>
-    
   </div>
   <canvas class="handle-img"></canvas>
 </div>
-<script src="static/js/createComposeImgs.js"></script>
+<script src="static/js/CreateComposeImgs.js"></script>
 <script>
   var myCanvas = document.querySelector(".handle-img");
-  var baseUrl = '/static/images/backgroundImg.png';
+  var baseUrl = '/static/images/bg_img.jpg';
   var imgUrls = [
     'static/images/tree.png',
     'static/images/soccer.png',
@@ -52,14 +51,14 @@
       height: 600,
       leftSpace: 180,
       topSpace: 1200,
-      index: 0
+      id: 0
     },
     {
       width: 150,
       height: 155,
       leftSpace: 1100,
       topSpace: 1250,
-      index: 1
+      id: 1
     },
   ];
   var composeImgs = new CreateComposeImgs({
@@ -92,7 +91,6 @@
     newId = newId === 0 ? 1 : 0;
 
     $(this).data( 'img-index', newId );
-    updateConfigure(composeImgs.foreConfigure[index]);
     // 先清空指定印刷面
     composeImgs.clearImgById( index );
     // 再绘制
@@ -108,15 +106,16 @@
     let $par = $(this).closest('.change-group');
     let width = $par.find('[name="change-design-width"]').val();
     let height = $par.find('[name="change-design-height"]').val();
-    let left = $par.find('[name="change-design-left"]').val();
-    let top = $par.find('[name="change-design-top"]').val();
-    let index = $par.data('id') || 0;
+    let leftSpace = $par.find('[name="change-design-left"]').val();
+    let topSpace = $par.find('[name="change-design-top"]').val();
+    let id = $par.data('id') || 0;
 
-    composeImgs.adjustImg( { width, height, left, top, index } );
+    composeImgs.adjustImg( { width, height, leftSpace, topSpace, id } );
   });
 
-  function updateConfigure( { width, height, leftSpace, topSpace, index } ) {
-    let $par = $(`.change-group[data-id="${index}"]`);
+  function updateConfigure( { width, height, leftSpace, topSpace, id } ) {
+    let $par = $(`.change-group[data-id="${id}"]`);
+    
     if( width !== undefined ) {
       $par.find('[name="change-design-width"]').val(width);
     }

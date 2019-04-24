@@ -815,6 +815,9 @@ text-decoration: underline;
     line-height: 1.5;
     cursor: pointer;
 }
+.main-btn-b.small {
+    padding: 4px 6px;
+}
 .com-css-input {
   padding: 6px 10px;
   border: 1px solid #ccc;
