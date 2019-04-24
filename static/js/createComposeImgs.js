@@ -12,14 +12,15 @@ var CreateComposeImgs;
     *   foreUrl: Object或Array, 印刷图地址，单面Object, 多面Array
     *       Object: {
     *           url: 图片地址
-    *           id: 对应图片配置数组foreConfigure的索引
+    *           id: 对应图片配置数组foreConfigure的id
     *       }
     *   foreConfigure: Array, 印刷图的相关配置对象configureObj
     *       configureObj： {
     *           width: 150,
     *           height: 155,
     *           leftSpace: 1100,
-    *           topSpace: 1250
+    *           topSpace: 1250,
+    *           id: 0,
     *       }
     *   leftSpace: Number, 图片绘制距离背景图左边缘的大小,（px）默认为0
     *   topSpace: Number, 图片绘制距离背景图上边缘的大小,（px）默认为0
@@ -37,9 +38,10 @@ var CreateComposeImgs;
     * foreImg： Array，印刷图对象imgObj缓存数组
     *   imgObj: {
     *       img: 图片对象
-    *       id: 图片对应配置项数组foreConfigure的索引值
+    *       id: 对应图片配置数组foreConfigure的id
     *   }
     * foreConfigure: Array, 图片配置项configureObj缓存数组
+    * foreUrl: Array, 图片地址foreUrl缓存数组
     * 
     */
   let loaderTotal = 0;
@@ -237,7 +239,6 @@ var CreateComposeImgs;
                 };
             }
         }
-        
     },
 
     // 调整印刷图绘制区域
@@ -246,10 +247,10 @@ var CreateComposeImgs;
         height, 
         leftSpace, 
         topSpace,
-        index, 
+        id, 
     } ) {
         let _scope = this;
-        let configure = _scope.foreConfigure[index];
+        let configure = _scope._getConfigureID( id );
 
         configure.width = Number(width) || 0;
         configure.height = Number(height) || 0;
@@ -285,6 +286,20 @@ var CreateComposeImgs;
         }
         return imgObj;
     },
+    // 通过印刷图id来获取，对应的配置数组foreConfigure对象
+    _getConfigureID: function ( id ) {
+        let _scope = this;
+        let configure = {};
+
+        for(let i = 0, len = _scope.foreConfigure.length; i < len; i++) {
+            let ele = _scope.foreConfigure[i];
+            if ( Number( id ) === Number( ele.id ) ) {
+                configure = ele;
+                return configure;
+            }
+        }
+        return configure;
+    },
 
     // 通过印刷图id或者imgObj来绘制印刷图
     _drayImgByIDOrObj: function ( { 
@@ -295,7 +310,8 @@ var CreateComposeImgs;
         let configure = {};
 
         imgObj = imgObj || _scope._getImgObjByID( id ).obj;
-        configure = _scope.foreConfigure[imgObj.id];
+
+        configure = _scope._getConfigureID( imgObj.id );
         configure.width = configure.width || 0;
         configure.height = configure.height || 0;
 
