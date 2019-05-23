@@ -67,6 +67,7 @@
     </div>
     <div id="designer-box"></div>
 </div>
+<img src="" alt="" id="newimg">
 <script src="/static/js/OrbitControls.js"></script>
 <script src="/static/js/three_OBJExporter.js"></script>
 <script src="/static/js/vue.min.js"></script>
@@ -74,8 +75,11 @@
 <script>
     var vm;
     var meshObj;
+    var renderer;
     $(function () {
-        var backgroundImg = '/static/images/bg_img.jpg';
+        // var backgroundImg = '/static/images/bg_img.jpg';
+        // var backgroundImg = '/static/images/bg_white.jpg';
+        var backgroundImg = '/static/images/bg_red.jpg';
         var imgUrls = [
             'static/images/tree.png',
             'static/images/design-img1.png',
@@ -235,7 +239,7 @@
         //定义3D世界变量
         var camera;
         var scene;
-        var renderer;
+       
         var stats;
         var WIDTH;
         var HEIGHT;
@@ -359,6 +363,8 @@
                     if ( child instanceof THREE.Mesh ) {
                         // 设置纹理映射
                         child.material[0].map = texture[0];
+                        child.material[0].side = THREE.DoubleSide;
+                        child.material[0].transparent = true;
                     }
                 });
                 meshObj.position.y = viewPositionY;
@@ -367,7 +373,10 @@
                 scene.add( meshObj );
             }, onProgress, onError );
 
-            renderer = new THREE.WebGLRenderer();
+            // 保留缓冲区，以便导出图片
+            renderer = new THREE.WebGLRenderer({
+                preserveDrawingBuffer: true
+            });
             renderer.setPixelRatio( window.devicePixelRatio );
             renderer.setSize( WIDTH, HEIGHT );
             renderer.setClearColor( 0xffffff );

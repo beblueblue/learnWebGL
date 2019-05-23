@@ -59,22 +59,25 @@
     // texture.WrapT = THREE.ClampToEdgeWrapping;
     // texture.Offset = new THREE.Vector2(-0.1, -0.1);
 
-    //model
+    // model加载过程中调用
     var onProgress = function (xhr) {
       if ( xhr.lengthComputable ) {
         var percentComplete = xhr.loaded / xhr.total * 100;
         console.log( Math.round(percentComplete, 2) + '% downloaded' );
       }
     };
+    // model加载中出现错误时调用
     var onError = function (xhr) {
       console.log('引入失败')
     };
     var loader = new THREE.OBJLoader(manager);
-    loader.load('/static/models/male02.obj', function(object){
-      object.traverse( function ( child ) {
-        if ( child instanceof THREE.Mesh ) {
-          child.material.map = texture;
-        }
+    loader.load('/static/models/male02.obj', 
+      // model加载成功后调用
+      function(object){
+        object.traverse( function ( child ) {
+          if ( child instanceof THREE.Mesh ) {
+            child.material.map = texture;
+          }
       });
       object.position.y = - 80;
       console.log(object)

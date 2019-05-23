@@ -269,7 +269,7 @@ var CreateComposeImgs;
     getComposedImg: function () {
         let _scope = this;
 
-        return _scope.canvas.toDataURL( 'img/png' )
+        return _scope.canvas.toDataURL( 'img/png' );
     },
 
     // 通过印刷图id来获取，图片在缓存数组foreImg中的图片对象imgObj
