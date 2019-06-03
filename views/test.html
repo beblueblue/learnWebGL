@@ -1,208 +1,205 @@
 {% extends "base.html" %} {% block main %}
 <style>
-
+  body {
+    background:#777;
+    padding:0;
+    margin:0;
+  }
 </style>
-<!-- <a id="start" class="ml10 main-btn-b" href="javascript:main()">点击开始</a>
-<br><a id="start" class="ml10 main-btn-b mt20" href="javascript:main(true)">点击开始(网格)</a> -->
+<script src="/static/js/OrbitControls.js"></script>
+<script>
+  if ( ! Detector.webgl ) Detector.addGetWebGLMessage();
+  // 渲染器高宽与纹理图片路径
+  const WIDTH = 1200;
+  const HEIGHT = 1200;
+  const backgroundImg = '/static/images/background-demo.png';
+  // 观察距离（待研究）
+  const viewPositionY = -1300;
+  const viewPositionX = 0;
+  const viewPositionZ = 0;
 
-<script src="/static/js/perspective-transform.js"></script>
-<script type="text/javascript">
-var curTime = new Date();
-  // import { DRAW_IMAGE_EXTEND_EX, multiply, Point2D, Vert2D, Mesh2D }  from './previewAPI';
-const DRAW_IMAGE_EXTEND_EX = 3;
-
-class Point2D {
- constructor(x, y, u, v) {
-  this.x = x;
-  this.y = y;
-  this.u = u;
-  this.v = v; 
- }
-}
-
-class Vert2D {
- constructor(p0, p1, p2) {
-  this.p0 = p0;
-  this.p1 = p1;
-  this.p2 = p2;
- }
- drawMeshLineToContext(plist, ctx) {
-  var p0 = plist[this.p0] ,p1 = plist[this.p1] ,p2 = plist[this.p2];
-  ctx.moveTo(p0.x, p0.y);
-  ctx.lineTo(p1.x, p1.y);
-  ctx.lineTo(p2.x, p2.y);
-  ctx.lineTo(p0.x, p0.y);
- }
- drawImageToContext(plist, img, ctx) {
-  var p0 = plist[this.p0] ,p1 = plist[this.p1] ,p2 = plist[this.p2];
-  Vert2D.drawImageToContextWithPoints(img ,ctx ,p0.x ,p0.y ,p1.x ,p1.y ,p2.x ,p2.y ,p0.u ,p0.v ,p1.u ,p1.v ,p2.u ,p2.v);
- }
-
- static extendVert(x0, y0, x1, y1, x2, y2) {
-  var x = 2*x0 - x1 - x2, y = 2 * y0 - y1 - y2;
-  var d = Math.sqrt(DRAW_IMAGE_EXTEND_EX / (x * x + y * y));
-  return [x0 + x * d, y0 + y * d];
- }
-
- static drawImageToContextWithPoints(img ,ctx ,x0 ,y0 ,x1 ,y1 ,x2 ,y2 ,u0 ,v0 ,u1 ,v1 ,u2 ,v2) {
-  u0 *= img.width;
-  u1 *= img.width;
-  u2 *= img.width;
-  v0 *= img.height;
-  v1 *= img.height;
-  v2 *= img.height;
-
-  //fix gap in images
-  var s0 = Vert2D.extendVert(x0, y0, x1, y1, x2, y2);
-  var s1 = Vert2D.extendVert(x1, y1, x0, y0, x2, y2);
-  var s2 = Vert2D.extendVert(x2, y2, x1, y1, x0, y0);
-  //fix end
-
-  ctx.beginPath();
-  ctx.moveTo(s0[0], s0[1]);
-  ctx.lineTo(s1[0], s1[1]);
-  ctx.lineTo(s2[0], s2[1]);
-  ctx.closePath();
- 
-  x1 -= x0;
-  y1 -= y0;
-  x2 -= x0;
-  y2 -= y0;
- 
-  u1 -= u0;
-  v1 -= v0;
-  u2 -= u0;
-  v2 -= v0;
- 
-  var det = 1 / (u1*v2 - u2*v1),
-      a = (v2*x1 - v1*x2) * det,
-      b = (v2*y1 - v1*y2) * det,
-      c = (u1*x2 - u2*x1) * det,
-      d = (u1*y2 - u2*y1) * det,
-      e = x0 - a*u0 - c*v0,
-      f = y0 - b*u0 - d*v0;
- 
-  ctx.save();
-  ctx.transform(a, b, c, d, e, f);
-  ctx.clip();
-  ctx.drawImage(img, 0, 0);
-  ctx.restore();
- }
-}
-
-class Mesh2D {
- constructor() {
- 	this.points = [];
- 	this.verts = [];
- }
-
- move( x,y ) {
-  for (var i = 0 ;i < this.points.length ;i++) {
-   this.points[i].x+=x;
-   this.points[i].y+=y;
+  // renderer构建
+  let container;
+  let renderer;
+  let png;
+  let path;
+  function initRenderer() {
+    container = document.createElement( 'div' );
+    document.body.appendChild( container );
+    // 浏览器构建
+    renderer = new THREE.WebGLRenderer({
+        preserveDrawingBuffer: true,
+        antialias: true
+    });
+    renderer.setPixelRatio( window.devicePixelRatio );
+    renderer.setSize( WIDTH, HEIGHT );
+    container.appendChild( renderer.domElement );
+    // node构建
+    // const THREE = require('three')
+    // const PNG = require('pngjs').PNG
+    // const gl = require('gl')(WIDTH, HEIGHT, {
+    //     preserveDrawingBuffer: true,
+    //     antialias: true
+    // })
+    // const fs = require('fs')
+    // const { JSDOM } = require("jsdom");
+    // const dom = new JSDOM('<!doctype html><html><head></head><body></body></html>');
+    // const window = dom.window;
+    // const document = window.document;
+    // const canvas = document.createElement('canvas');
+    // path = 'out.png'
+    // png = new PNG({ width: WIDTH, height: HEIGHT })
+    // renderer = new THREE.WebGLRenderer({
+    //     antialias: true,
+    //     canvas: canvas,
+    //     context: gl
+    // })
   }
- }
- changeByMatrix4(te) {
-      for (var i = 0; i < this.points.length; i++) {
-          this.points[i].changeByMatrix4(te);
-      }
+  // 相机构建
+  let camera;
+  function initCamera() {
+      camera = new THREE.PerspectiveCamera(45, WIDTH / HEIGHT, 0.1, 10000);
+      // camera.position.x = 500;
+      // camera.position.y = 500;
+      camera.position.z = 1200;
   }
- drawMeshLine(ctx) {
-  ctx.save();
-  ctx.lineWidth = 0.5;
-  ctx.strokeStyle = "#0000ff";
-  for (var i = 0 ;i < this.verts.length ;i++) {
-   this.verts[i].drawMeshLineToContext(this.points, ctx);
+  let scene;
+  function initScene() {
+      scene = new THREE.Scene();
   }
-  ctx.stroke();
-  ctx.restore();
- }
- drawImageToContext(img, ctx) {
-  for (var i = 0 ;i < this.verts.length ;i++) {
-   this.verts[i].drawImageToContext(this.points, img, ctx);
+  let lights = [];
+  function initLight() {
+    //光源1为环境光
+    let ambientLight = new THREE.AmbientLight( 0xeeeeee, 0.8 );
+    //光源2为点光源
+    let pointLight = new THREE.PointLight( 0xffffff, 0.3 );
+    pointLight.position.set( 2000, 2000, 0);
+    lights.push(ambientLight, pointLight);
+    scene.add(ambientLight);
+    scene.add(pointLight);
   }
- }
+  // 初始化辅助线和背景图
+  function initDebug() {
+    //模型辅助线
+    let axisHelper = new THREE.AxesHelper(500);
+    
+    //给场景添加天空盒子纹理
+    let cubeTextureLoader = new THREE.CubeTextureLoader();
+    cubeTextureLoader.setPath( '/static/images/textures/' );
+    //六张图片分别是朝前的（posz）、朝后的（negz）、朝上的（posy）、朝下的（negy）、朝右的（posx）和朝左的（negx）。
+    let cubeTexture = cubeTextureLoader.load( [
+        'right.jpg', 'left.jpg',
+        'top.jpg', 'bottom.jpg',
+        'front.jpg', 'back.jpg'
+    ] );
 
- static createMapMesh(width, height, divW, divH) {
-  var m = new Mesh2D();
-  var widthSingle = width/divW ,heightSingle = height/divH;
-  var uSingle = 1/divW ,vSingel = 1/divH;
-  for (var i=0 ;i<=divH; i++) {
-   for (var j=0 ;j<=divW; j++) {
-  	m.points.push(new Point2D(j*widthSingle ,i*heightSingle ,j*uSingle ,i*vSingel));
-   }
+    scene.add(axisHelper);
+    scene.background = cubeTexture;
   }
-  for (var i=0 ;i<divH; i++) {
-   for (var j=0 ;j<divW; j++) {
-   	var startPoint = (divW + 1) * i + j;
-  	m.verts.push(new Vert2D(startPoint+1, startPoint, startPoint+divW+1));
-  	m.verts.push(new Vert2D(startPoint+divW+1, startPoint+divW+2, startPoint+1));
-   }
+  // 初始化模型（带纹理）
+  function initObject() {
+    let onProgress;
+    let onError;
+    let manager;
+    let textureLoader;
+    let texture;
+    let loader;
+
+    // model载入过程监控
+    onProgress = function ( xhr ) {
+        if ( xhr.lengthComputable ) {
+            var percentComplete = xhr.loaded / xhr.total * 100;
+            console.log( Math.round(percentComplete, 2) + '% downloaded' );
+        }
+    };
+    // model载入失败监控
+    onError = function ( xhr ) {
+        console.log('model:' + xhr + '引入失败');
+    };
+    manager = new THREE.LoadingManager();
+    manager.onProgress = function ( url, loaded, total ) {
+      console.log(url, loaded, total);
+    };
+    // texture载入
+    textureLoader = new THREE.TextureLoader( manager );
+    texture = textureLoader.load( backgroundImg );
+    loader = new THREE.JSONLoader( manager );
+    loader.load( '/static/models/textureObj2.js', function ( geometry, materials ) {
+      console.log(geometry)
+      console.log(materials)
+        let meshObj = new THREE.Mesh( geometry, materials );
+        meshObj.traverse( function ( child ) {
+            if ( child instanceof THREE.Mesh ) {
+                // 设置纹理映射
+                child.material[0].map = texture;
+                child.material[0].side = THREE.DoubleSide;
+                child.material[0].transparent = true;
+            }
+        });
+        meshObj.position.y = viewPositionY;
+        meshObj.position.x = viewPositionX;
+        meshObj.position.z = viewPositionZ;
+        scene.add( meshObj );
+        render();
+    }, onProgress, onError );
   }
-  return m;
- }
-}
-
-const FISH_DIV = 16;
-const FISH_DIV_h = 16;
-
-const width = 400;
-const height = 300;
-function main(debug) {
- $('body').append(`<canvas class="ml20" id=main width=${width*2}px height=${height}px style=background-color:#bed1fd></canvas>`);
- var ct = document.getElementById("main").getContext("2d");  
-
- var m = Mesh2D.createMapMesh(width, 250, FISH_DIV, FISH_DIV_h);
-
- var img;
- var loadImg = function () {
-  img = new Image();
-  img.src = "/static/images/previewTest.jpg";
-  img.onload = render;
- } 
- var render = function() {
-  /* 透视变化矩阵计算
-    [a, b, 0,
-    d, e, 0,
-    g, h, 1]
-    dx31 = x3 - x1
-    dx32 = x3 - y2
-    dy31 = y3 - y1
-    dy32 = y3 - y2
-    det(M) = dx31dy32 - dy31dx32
-  */
-  console.log(m.points)
-  ct.clearRect(0, 0, width, height);
-  var srcCorners = [
-    0, 0, 
-    width, 0, 
-    width, 250, 
-    0, 250
-  ];
-  var dstCorners = [
-    20, 0, 
-    width + 40, 100, 
-    width, 120, 
-    0, 250
-  ];
-  var perspT = PerspT(srcCorners, dstCorners);
-  console.log(perspT.coeffs)
-  for (var i = 0; i < m.points.length; i++) {
-    var newPoint = perspT.transform(m.points[i].x, m.points[i].y);
-    m.points[i].x = newPoint[0];
-    m.points[i].y = newPoint[1];
+  function render() {
+    renderer.clear();
+    renderer.render( scene, camera );
   }
-  // m.changeByMatrix4(newMatrix);
-  m.drawImageToContext(img, ct);
-  console.log(m.points)
-  if (debug) m.drawMeshLine(ct);
-  // window.requestAnimationFrame(render);
- }
 
- loadImg();
-}
-main(false)
-var lastTime = new Date();
-console.log(lastTime - curTime)
+  function init(debug){
+    initScene();
+    initRenderer();
+    initCamera();
+    if (debug) {
+      initDebug();
+    }
+    initLight();
+    initObject();
+    // node
+    // Let's create a render target object where we'll be rendering
+    // let rtTexture = new THREE.WebGLRenderTarget(
+    //     width, height, {
+    //         minFilter: THREE.LinearFilter,
+    //         magFilter: THREE.NearestFilter,
+    //         format: THREE.RGBAFormat
+    // })
+    // renderer.render(scene, camera, rtTexture, true);
+  }
+  // 导出图片
+  function exportImg(){
+    let newGl = renderer.getContext()
+
+    let pixels = new Uint8Array(4 * WIDTH * HEIGHT)
+
+    newGl.readPixels(0, 0, WIDTH, HEIGHT, gl.RGBA, gl.UNSIGNED_BYTE, pixels)
+
+    for(let j = 0; j < HEIGHT; j++){
+        for(let i = 0; i < WIDTH; i++){
+            const k = j * WIDTH + i
+            const r = pixels[4*k]
+            const g = pixels[4*k + 1]
+            const b = pixels[4*k + 2]
+            const a = pixels[4*k + 3]
+
+            const m = (HEIGHT - j + 1) * WIDTH + i
+            png.data[4*m]     = r
+            png.data[4*m + 1] = g
+            png.data[4*m + 2] = b
+            png.data[4*m + 3] = a
+        }
+    }
+
+    let stream = fs.createWriteStream(path)
+    png.pack().pipe(stream)
+
+    stream.on('close', () =>
+        console.log("Image written: #{ path }")
+    )
+  }
+  init(true);
+  // render();
+
 </script>
 {% endblock %}

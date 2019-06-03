@@ -175,7 +175,7 @@
 		};
 
         this.numeric = numeric;
-		root.numeric = numeric;
+		root.zw_numeric = numeric;
 	}
 
 }(window));
@@ -206,14 +206,14 @@
         var matC;
     
         try{
-            matC = numeric.inv(numeric.dotMMsmall(numeric.transpose(matA), matA));
+            matC = zw_numeric.inv(zw_numeric.dotMMsmall(zw_numeric.transpose(matA), matA));
         }catch(e){
             console.log(e);
             return [1,0,0,0,1,0,0,0];
         }
 
-        var matD = numeric.dotMMsmall(matC, numeric.transpose(matA));
-        var matX = numeric.dotMV(matD, matB);
+        var matD = zw_numeric.dotMMsmall(matC, zw_numeric.transpose(matA));
+        var matX = zw_numeric.dotMV(matD, matB);
         for(var i = 0; i < matX.length; i++) {
             matX[i] = round(matX[i]);
         }
@@ -251,5 +251,5 @@
         }
     };
 
-    window.PerspT = PerspT;
+    window.zw_PerspT = PerspT;
 })()

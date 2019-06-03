@@ -321,7 +321,7 @@
             scene.add( ambientLight );
             //光源2为点光源
             pointLight = new THREE.PointLight( 0xffffff, 0.3 );
-            pointLight.position.set( 0, 2000, 0);
+            pointLight.position.set( 2000, 2000, 0);
             scene.add( pointLight );
             scene.add( camera );
 
@@ -375,7 +375,8 @@
 
             // 保留缓冲区，以便导出图片
             renderer = new THREE.WebGLRenderer({
-                preserveDrawingBuffer: true
+                preserveDrawingBuffer: true,
+                antialias: true
             });
             renderer.setPixelRatio( window.devicePixelRatio );
             renderer.setSize( WIDTH, HEIGHT );

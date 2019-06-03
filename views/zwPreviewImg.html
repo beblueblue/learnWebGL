@@ -138,16 +138,31 @@ class Mesh2D {
     }
 }
 
+// 从canvas容器原点（左上角）开始渲染，将图片渲染为width*height
+const width = 400;
+const height = 250;
+// 16*16 三角形面片进行拟合
 const FISH_DIV = 16;
 const FISH_DIV_h = 16;
 
-const width = 400;
-const height = 300;
+var srcCorners = [
+    0, 0,
+    width, 0,
+    width, 250,
+    0, 250
+];
+var dstCorners = [
+    0, 0,
+    width, 0,
+    width, 120,
+    0, 250
+];
 function main(debug) {
-    $('body').append(`<canvas class="ml20" id=main width=${width * 2}px height=${height}px style=background-color:#bed1fd></canvas>`);
+    $('body').append(`<canvas class="ml20" id=main width=${width * 2}px height=${height*2}px style=background-color:#bed1fd></canvas>`);
     var ct = document.getElementById("main").getContext("2d");
 
-    var m = Mesh2D.createMapMesh(width, 250, FISH_DIV, FISH_DIV_h);
+    var m = Mesh2D.createMapMesh(width, height, FISH_DIV, FISH_DIV_h);
+    console.log(m)
 
     var img;
     var loadImg = function () {
@@ -157,20 +172,9 @@ function main(debug) {
     }
     var render = function () {
         ct.clearRect(0, 0, width, height);
-        var srcCorners = [
-            0, 0,
-            width, 0,
-            width, 250,
-            0, 250
-        ];
-        var dstCorners = [
-            20, 0,
-            width + 40, 100,
-            width, 120,
-            0, 250
-        ];
+        
         /* 透视变化矩阵计算 */
-        var perspT = PerspT(srcCorners, dstCorners);
+        var perspT = zw_PerspT(srcCorners, dstCorners);
         for (var i = 0; i < m.points.length; i++) {
             var newPoint = perspT.transform(m.points[i].x, m.points[i].y);
             m.points[i].x = newPoint[0];
@@ -183,6 +187,10 @@ function main(debug) {
 
     loadImg();
 }
-main(false)
+main(false);
+function changeDST(){
+    dstCorners[1] += 10;
+    main(false);
+}
 </script>
 {% endblock %}
